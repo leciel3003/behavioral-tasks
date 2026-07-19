@@ -1,0 +1,1170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <title>Star Task</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --ink: #182126;
+      --muted: #68737a;
+      --line: #d8d2c7;
+      --accent: #2c7572;
+      --accent-ink: #ffffff;
+      --choice: #edf5f2;
+      --gold: #d99a28;
+      --blue: #36339b;
+      --blue-ink: #ffffff;
+      font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button,
+    input {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .app {
+      width: min(1120px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 38px;
+    }
+
+    .settings-toggle {
+      display: block;
+      width: 44px;
+      height: 44px;
+      margin: 0 0 14px auto;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .running-total {
+      position: fixed;
+      top: 20px;
+      right: 80px;
+      z-index: 10;
+      color: var(--ink);
+      font-size: 27px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .running-total[hidden] {
+      display: none;
+    }
+
+    .app.task-running > header,
+    .app.task-running .stage-top,
+    .app.task-running .stats,
+    .app.task-running .table-wrap,
+    .app.task-running .prompt,
+    .app.task-running .message {
+      display: none;
+    }
+
+    .app.task-running .layout {
+      display: block;
+    }
+
+    .app.task-running .stage {
+      min-height: calc(100vh - 80px);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: #fff;
+      box-shadow: none;
+    }
+
+    .app.task-running .screen {
+      min-height: calc(100vh - 80px);
+      align-content: center;
+    }
+
+    .app.task-running .choice {
+      border: 0;
+      border-radius: 0;
+      background: #fff;
+      box-shadow: none;
+    }
+
+    .app.task-running .choice:hover:not(:disabled) {
+      border-color: transparent;
+      background: #fff;
+    }
+
+    .instruction-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #fff;
+      color: #151a1c;
+      text-align: center;
+    }
+
+    .instruction-overlay[hidden] {
+      display: none;
+    }
+
+    .instruction-content {
+      width: min(760px, 100%);
+    }
+
+    .instruction-content p {
+      margin: 0;
+      color: #151a1c;
+      font-size: clamp(25px, 4.8vw, 42px);
+      line-height: 1.45;
+      font-weight: 700;
+      white-space: pre-line;
+    }
+
+    .instruction-countdown {
+      display: none;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-end;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #eef4f1;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 330px) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel,
+    .stage,
+    .stat,
+    .table-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 14px 36px rgba(30, 35, 38, 0.1);
+    }
+
+    .panel,
+    .stage {
+      padding: 18px;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    input {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
+    }
+
+    .stage-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .screen {
+      min-height: 520px;
+      display: grid;
+      align-content: center;
+      gap: 18px;
+    }
+
+    .prompt {
+      margin: 0;
+      font-size: clamp(24px, 3.4vw, 38px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: 0;
+      text-align: center;
+    }
+
+    .message {
+      color: var(--muted);
+      text-align: center;
+      font-size: 16px;
+      min-height: 28px;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .choice {
+      min-height: 320px;
+      padding: 30px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: var(--choice);
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .choice:hover:not(:disabled) {
+      border-color: var(--accent);
+    }
+
+    .choice strong {
+      font-size: clamp(54px, 8.5vw, 92px);
+      line-height: 1;
+    }
+
+    .choice span {
+      color: var(--muted);
+      font-size: 26px;
+    }
+
+    .stars {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      width: 130px;
+      max-width: 130px;
+    }
+
+    .star {
+      width: 25px;
+      height: 25px;
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 96%, 50% 73%, 21% 96%, 32% 57%, 2% 35%, 39% 35%);
+      background: linear-gradient(135deg, #fff59a 0%, #ffd21f 42%, #e2a500 100%);
+      filter: drop-shadow(0 2px 1px rgba(132, 90, 0, .28));
+    }
+
+    .waiting,
+    .feedback,
+    .total-screen,
+    .attention {
+      min-height: 430px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 14px;
+    }
+
+    .countdown {
+      font-size: clamp(58px, 10vw, 112px);
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .feedback .win {
+      font-size: clamp(34px, 6vw, 62px);
+      font-weight: 800;
+      color: #d02525;
+    }
+
+    .total-screen {
+      background: #eef0f2;
+      color: var(--ink);
+      border-radius: 8px;
+      min-height: 320px;
+      padding: 30px;
+      font-size: clamp(28px, 4.5vw, 46px);
+      font-weight: 700;
+    }
+
+    .total-screen strong {
+      display: block;
+      font-size: clamp(58px, 10vw, 104px);
+      line-height: 1;
+      margin-top: 8px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      padding: 13px 14px;
+      box-shadow: none;
+    }
+
+    .stat small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    .stat strong {
+      font-size: 22px;
+    }
+
+    .table-wrap {
+      margin-top: 18px;
+      max-height: 250px;
+      overflow: auto;
+      box-shadow: none;
+    }
+
+    table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: var(--panel);
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    th:first-child,
+    td:first-child,
+    th:nth-child(6),
+    td:nth-child(6) {
+      text-align: left;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 20px;
+    }
+
+    .attention-options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 860px) {
+      body {
+        -webkit-text-size-adjust: 100%;
+      }
+
+      header,
+      .stage-top {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .layout,
+      .choices {
+        grid-template-columns: 1fr;
+      }
+
+      .screen {
+        min-height: 390px;
+      }
+
+      .choice {
+        min-height: 240px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      .running-total {
+        top: 16px;
+        right: 66px;
+        font-size: 22px;
+      }
+
+      .app {
+        width: calc(100% - 14px);
+        padding: max(12px, env(safe-area-inset-top)) 0 max(24px, env(safe-area-inset-bottom));
+      }
+
+      header {
+        margin-bottom: 10px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .subtitle {
+        font-size: 13px;
+      }
+
+      .panel,
+      .stage {
+        padding: 12px;
+      }
+
+      .screen {
+        min-height: 360px;
+        gap: 12px;
+      }
+
+      .prompt {
+        font-size: 24px;
+      }
+
+      .message {
+        font-size: 14px;
+      }
+
+      .choices {
+        gap: 10px;
+      }
+
+      .choice {
+        min-height: 210px;
+        padding: 20px;
+        gap: 8px;
+      }
+
+      .choice strong {
+        font-size: 58px;
+      }
+
+      .choice span {
+        font-size: 20px;
+      }
+
+      .star {
+        width: 18px;
+        height: 18px;
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .button-row button:first-child,
+      .button-row button:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .waiting,
+      .feedback,
+      .total-screen,
+      .attention {
+        min-height: 300px;
+      }
+
+      .total-screen {
+        min-height: 260px;
+        padding: 20px;
+        font-size: 30px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .table-wrap {
+        max-height: 210px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="instruction-overlay" id="instructionOverlay">
+    <div class="instruction-content">
+      <p id="instructionDetail">두 가지 보상 중 하나를 선택하세요.
+실험 중 쌓인 별로 실험이 끝난 후 보상을 받을 수 있습니다.</p>
+      <div class="instruction-countdown" id="instructionCountdown"></div>
+    </div>
+  </div>
+
+  <main class="app">
+    <header>
+      <div>
+        <h1>Star Task</h1>
+        <p class="subtitle">작은 즉시 보상과 큰 지연 보상 중 하나를 선택합니다.</p>
+      </div>
+      <span class="badge" id="runState">대기</span>
+    </header>
+
+    <button class="settings-toggle" id="settingsToggle" type="button" aria-label="설정 열기" aria-expanded="false">⚙</button>
+    <div class="running-total" id="runningTotal" hidden>누적 별: 0개</div>
+
+    <section class="layout">
+      <aside class="panel settings-drawer" id="settingsDrawer" hidden>
+        <h2>설정</h2>
+        <div class="controls">
+          <label>
+            피드백 시간(ms)
+            <input id="feedbackMs" type="number" min="500" max="5000" step="100" value="1500">
+          </label>
+          <label>
+            누적 보상 표시(ms)
+            <input id="totalMs" type="number" min="500" max="5000" step="100" value="2000">
+          </label>
+        </div>
+        <div class="button-row">
+          <button class="primary" id="startBtn" type="button">시작</button>
+          <button id="resetBtn" type="button">초기화</button>
+          <button id="exportBtn" type="button" disabled>CSV 저장</button>
+        </div>
+      </aside>
+
+      <section class="stage">
+        <div class="stage-top">
+          <h2 id="trialTitle">준비</h2>
+          <span class="badge" id="progressBadge">20회</span>
+        </div>
+
+        <div class="screen" id="screen">
+          <p class="prompt">시작을 누르면 과제가 진행됩니다.</p>
+          <div class="message">각 시행에서 지금 받을지, 기다렸다가 더 많이 받을지 선택하세요.</div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <small>누적 보상</small>
+            <strong id="totalStat">0</strong>
+          </div>
+          <div class="stat">
+            <small>기다린 보상 선택</small>
+            <strong id="delayedStat">0%</strong>
+          </div>
+          <div class="stat">
+            <small>평균 선택 RT</small>
+            <strong id="rtStat">-</strong>
+          </div>
+          <div class="stat">
+            <small>완료 시행</small>
+            <strong id="doneStat">0/20</strong>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>시행</th>
+                <th>지금</th>
+                <th>나중</th>
+                <th>지연시간</th>
+                <th>선택</th>
+                <th>위치</th>
+                <th>반응시간(ms)</th>
+                <th>획득</th>
+                <th>누적</th>
+              </tr>
+            </thead>
+            <tbody id="resultBody">
+              <tr><td class="empty" colspan="9">아직 기록된 선택이 없습니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const IMMEDIATE_AMOUNTS = [2, 4, 6, 8];
+    const DELAYS = [5, 10, 20, 30, 60];
+    const DELAYED_AMOUNT = 10;
+    const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbwl5pYyiRw2lB2yCAI86Lcq-JHR12sMpwYi5DGhUG2KOiCIdkSwqYgHDlAWs_ccKW-4/exec";
+    const WORKFLOW_KEY = "behavioralTaskWorkflow";
+    const workflow = (() => {
+      try { return JSON.parse(sessionStorage.getItem(WORKFLOW_KEY) || "null"); } catch (error) { return null; }
+    })();
+    const entryCondition = workflow?.entry_condition || new URLSearchParams(location.search).get("entry") || "standalone";
+    const ENTRY_LABELS = {
+      combined_paint_first: "통합 과제: 물감 먼저",
+      combined_candy_first: "통합 과제: 별 먼저",
+      paint_only: "물감 과제 단독",
+      candy_only: "별 과제 단독",
+      standalone: "단독 실행"
+    };
+
+    const els = {
+      feedbackMs: document.getElementById("feedbackMs"),
+      totalMs: document.getElementById("totalMs"),
+      startBtn: document.getElementById("startBtn"),
+      settingsToggle: document.getElementById("settingsToggle"),
+      settingsDrawer: document.getElementById("settingsDrawer"),
+      runningTotal: document.getElementById("runningTotal"),
+      resetBtn: document.getElementById("resetBtn"),
+      exportBtn: document.getElementById("exportBtn"),
+      runState: document.getElementById("runState"),
+      trialTitle: document.getElementById("trialTitle"),
+      progressBadge: document.getElementById("progressBadge"),
+      screen: document.getElementById("screen"),
+      totalStat: document.getElementById("totalStat"),
+      delayedStat: document.getElementById("delayedStat"),
+      rtStat: document.getElementById("rtStat"),
+      doneStat: document.getElementById("doneStat"),
+      resultBody: document.getElementById("resultBody")
+    };
+
+    const state = {
+      running: false,
+      accepting: false,
+      sequence: [],
+      index: 0,
+      current: null,
+      trialStartedAt: 0,
+      total: 0,
+      timers: [],
+      results: [],
+      attentionCheck: "",
+      sessionId: "",
+      startedAt: "",
+      finishedAt: ""
+    };
+
+    function clamp(value, min, max, fallback) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return fallback;
+      return Math.min(max, Math.max(min, parsed));
+    }
+
+    function shuffle(items) {
+      const copy = items.slice();
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function buildSequence() {
+      const trials = [];
+      for (const immediate of IMMEDIATE_AMOUNTS) {
+        for (const delay of DELAYS) {
+          trials.push({ immediate, delay });
+        }
+      }
+      return shuffle(trials).map((trial, index) => ({
+        ...trial,
+        trial: index + 1,
+        delayedSide: Math.random() < 0.5 ? "left" : "right"
+      }));
+    }
+
+    function setLocked(locked) {
+      els.feedbackMs.disabled = locked;
+      els.totalMs.disabled = locked;
+      els.startBtn.disabled = locked;
+    }
+
+    function clearTimers() {
+      for (const timer of state.timers) window.clearTimeout(timer);
+      state.timers = [];
+    }
+
+    function wait(ms, fn) {
+      const timer = window.setTimeout(fn, ms);
+      state.timers.push(timer);
+    }
+
+    function stars(amount) {
+      return `<div class="stars" aria-hidden="true">${Array.from({ length: amount }, () => '<span class="star"></span>').join("")}</div>`;
+    }
+
+    function startRun() {
+      resetRun(true);
+      state.sessionId = window.crypto && typeof window.crypto.randomUUID === "function"
+        ? window.crypto.randomUUID()
+        : `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      state.startedAt = new Date().toISOString();
+      state.finishedAt = "";
+      state.sequence = buildSequence();
+      state.running = true;
+      setLocked(true);
+      document.querySelector(".app").classList.add("task-running");
+      els.runningTotal.textContent = "누적 별: 0개";
+      els.runningTotal.hidden = false;
+      els.runState.textContent = "진행 중";
+      document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
+      showTrial();
+    }
+
+    function showTrial() {
+      if (state.index >= state.sequence.length) {
+        showAttentionCheck();
+        return;
+      }
+
+      state.current = state.sequence[state.index];
+      state.accepting = true;
+      state.trialStartedAt = performance.now();
+
+      const trial = state.current;
+      const leftIsDelayed = trial.delayedSide === "left";
+      const leftOption = leftIsDelayed ? delayedButton("left") : immediateButton("left");
+      const rightOption = leftIsDelayed ? immediateButton("right") : delayedButton("right");
+
+      els.trialTitle.textContent = `${trial.trial}회 시행`;
+      els.progressBadge.textContent = `${trial.trial}/20`;
+      els.screen.innerHTML = `
+        <p class="prompt">어느 쪽을 선택할까요?</p>
+        <div class="message">작은 보상은 바로 받고, 큰 보상은 기다린 뒤 받습니다.</div>
+        <div class="choices">${leftOption}${rightOption}</div>
+      `;
+      for (const button of els.screen.querySelectorAll("[data-choice]")) {
+        button.addEventListener("click", () => choose(button.dataset.choice, button.dataset.side));
+      }
+    }
+
+    function immediateButton(side) {
+      const amount = state.current.immediate;
+      return `
+        <button class="choice" type="button" data-choice="immediate" data-side="${side}">
+          <strong>${amount}</strong>
+          ${stars(amount)}
+          <span>지금 받기</span>
+        </button>
+      `;
+    }
+
+    function delayedButton(side) {
+      return `
+        <button class="choice" type="button" data-choice="delayed" data-side="${side}">
+          <strong>${DELAYED_AMOUNT}</strong>
+          ${stars(DELAYED_AMOUNT)}
+          <span>${state.current.delay}초 후 받기</span>
+        </button>
+      `;
+    }
+
+    function choose(choice, side) {
+      if (!state.accepting || !state.current) return;
+      state.accepting = false;
+      const rt = Math.round(performance.now() - state.trialStartedAt);
+      const trial = state.current;
+      const won = choice === "delayed" ? DELAYED_AMOUNT : trial.immediate;
+      const waited = choice === "delayed" ? trial.delay : 0;
+
+      const row = {
+        participant_id: workflow?.participant_id || "",
+        response_recorded_at: new Date().toISOString(),
+        condition: `immediate_${trial.immediate}_delay_${trial.delay}`,
+        entry_condition: entryCondition,
+        task: "star_task",
+        task_version: "star_20trial_experiential",
+        session_id: state.sessionId,
+        session_started_at: state.startedAt,
+        trial: trial.trial,
+        immediate_amount: trial.immediate,
+        delayed_amount: DELAYED_AMOUNT,
+        delay_seconds: trial.delay,
+        chosen_option: choice,
+        chosen_side: side,
+        choice_rt_ms: rt,
+        waited_seconds: waited,
+        won_amount: won,
+        total_after_feedback: "",
+        attention_mind_wander: "",
+        session_finished_at: ""
+      };
+
+      if (choice === "delayed") {
+        state.results.push(row);
+        renderResults();
+        showCountdown(trial.delay, () => showFeedback(row, won));
+      } else {
+        state.results.push(row);
+        renderResults();
+        showFeedback(row, won);
+      }
+    }
+
+    function showCountdown(seconds, done) {
+      const started = performance.now();
+      function update() {
+        const elapsed = (performance.now() - started) / 1000;
+        const remaining = Math.max(0, seconds - elapsed);
+        els.screen.innerHTML = `
+          <div class="waiting">
+            <div class="countdown">${Math.ceil(remaining)}</div>
+            <div class="message">기다리는 중입니다.</div>
+          </div>
+        `;
+        if (remaining <= 0) {
+          done();
+        } else {
+          wait(200, update);
+        }
+      }
+      update();
+    }
+
+    function showFeedback(row, amount) {
+      state.total += amount;
+      row.total_after_feedback = state.total;
+      els.runningTotal.textContent = `누적 별: ${state.total}개`;
+      els.screen.innerHTML = `
+        <div class="feedback">
+          <div class="win">별 ${amount}개를 받았습니다</div>
+          ${stars(amount)}
+        </div>
+      `;
+      renderResults();
+      wait(clamp(els.feedbackMs.value, 500, 5000, 1500), showRunningTotal);
+    }
+
+    function showRunningTotal() {
+      els.screen.innerHTML = `
+        <div class="total-screen">
+          <div>현재까지 누적된 별</div>
+          <strong>${state.total}</strong>
+          <div>개</div>
+        </div>
+      `;
+      wait(clamp(els.totalMs.value, 500, 5000, 2000), () => {
+        state.index += 1;
+        showTrial();
+      });
+    }
+
+    function showAttentionCheck() {
+      els.trialTitle.textContent = "주의 확인";
+      els.progressBadge.textContent = "완료 전 확인";
+      els.screen.innerHTML = `
+        <div class="attention">
+          <p class="prompt">과제와 관련 없는 생각이 떠올랐나요?</p>
+          <div class="message">과제와 관련 없는 생각이 떠올랐는지 선택하세요.</div>
+          <div class="attention-options">
+            <button class="primary" type="button" data-attention="yes">예</button>
+            <button type="button" data-attention="no">아니오</button>
+          </div>
+        </div>
+      `;
+      for (const button of els.screen.querySelectorAll("[data-attention]")) {
+        button.addEventListener("click", () => finishRun(button.dataset.attention));
+      }
+    }
+
+    async function finishRun(attentionAnswer) {
+      state.attentionCheck = attentionAnswer || state.attentionCheck;
+      for (const row of state.results) {
+        row.attention_mind_wander = state.attentionCheck;
+      }
+      state.running = false;
+      state.accepting = false;
+      state.current = null;
+      state.finishedAt = new Date().toISOString();
+      document.querySelector(".app").classList.remove("task-running");
+      els.runningTotal.hidden = true;
+      for (const row of state.results) row.session_finished_at = state.finishedAt;
+      setLocked(false);
+      els.exportBtn.disabled = state.results.length === 0;
+      els.runState.textContent = "완료";
+      els.trialTitle.textContent = "완료";
+      els.progressBadge.textContent = "20/20";
+      const hasNextTask = Boolean(workflow && workflow.current_index < workflow.tasks.length - 1);
+      els.screen.innerHTML = hasNextTask
+        ? `
+          <p class="prompt">첫 번째 실험이 종료되었습니다.</p>
+          <div class="message">이제 두 번째 실험이 시작됩니다.</div>
+        `
+        : `
+          <p class="prompt">실험이 종료되었습니다. 감사합니다.</p>
+          <div class="message">총 ${state.total}개의 별을 획득했습니다. 결과를 저장할 수 있습니다.</div>
+        `;
+      renderResults();
+      if (workflow) {
+        await uploadToGoogleSheets();
+        window.setTimeout(advanceWorkflow, hasNextTask ? 5000 : 1500);
+      }
+    }
+
+    function advanceWorkflow() {
+      if (!workflow) return;
+      workflow.current_index += 1;
+      if (workflow.current_index < workflow.tasks.length) {
+        sessionStorage.setItem(WORKFLOW_KEY, JSON.stringify(workflow));
+        const next = workflow.tasks[workflow.current_index];
+        window.location.href = `${next}.html?entry=${encodeURIComponent(workflow.entry_condition)}`;
+      } else {
+        sessionStorage.removeItem(WORKFLOW_KEY);
+        window.location.href = "main.html?completed=1";
+      }
+    }
+
+    function resetRun(clearResults) {
+      clearTimers();
+      state.running = false;
+      state.accepting = false;
+      state.sequence = [];
+      state.index = 0;
+      state.current = null;
+      state.total = 0;
+      state.attentionCheck = "";
+      state.sessionId = "";
+      state.startedAt = "";
+      state.finishedAt = "";
+      document.querySelector(".app").classList.remove("task-running");
+      els.runningTotal.hidden = true;
+      setLocked(false);
+      els.runState.textContent = "대기";
+      els.trialTitle.textContent = "준비";
+      els.progressBadge.textContent = "20회";
+      els.screen.innerHTML = `
+        <p class="prompt">시작을 누르면 과제가 진행됩니다.</p>
+        <div class="message">지금 받을 보상 또는 기다린 후 받을 더 큰 보상 중 선택합니다.</div>
+      `;
+      if (clearResults) {
+        state.results = [];
+      }
+      renderResults();
+    }
+
+    function showInitialIntro() {
+      const overlay = document.getElementById("instructionOverlay");
+      const detail = document.getElementById("instructionDetail");
+      detail.textContent = "두 가지 보상 중 하나를 선택하세요.\n실험 중 쌓인 별로 실험이 끝난 후 보상을 받을 수 있습니다.";
+      overlay.hidden = false;
+      window.setTimeout(() => {
+        overlay.hidden = true;
+        startRun();
+      }, 4000);
+    }
+
+    function mean(values) {
+      if (!values.length) return null;
+      return values.reduce((sum, value) => sum + value, 0) / values.length;
+    }
+
+    function renderResults() {
+      els.exportBtn.disabled = state.results.length === 0;
+      if (!state.results.length) {
+        els.resultBody.innerHTML = '<tr><td class="empty" colspan="9">아직 기록된 선택이 없습니다.</td></tr>';
+        els.totalStat.textContent = "0";
+        els.delayedStat.textContent = "0%";
+        els.rtStat.textContent = "-";
+        els.doneStat.textContent = "0/20";
+        return;
+      }
+
+      els.resultBody.innerHTML = state.results.map((row) => `
+        <tr>
+          <td>${row.trial}</td>
+          <td>${row.immediate_amount}</td>
+          <td>${row.delayed_amount}</td>
+          <td>${row.delay_seconds}s</td>
+          <td>${row.chosen_option}</td>
+          <td>${row.chosen_side}</td>
+          <td>${row.choice_rt_ms}</td>
+          <td>${row.won_amount}</td>
+          <td>${row.total_after_feedback}</td>
+        </tr>
+      `).join("");
+
+      const delayed = state.results.filter((row) => row.chosen_option === "delayed").length;
+      const rt = mean(state.results.map((row) => row.choice_rt_ms));
+      els.totalStat.textContent = String(state.total);
+      els.delayedStat.textContent = `${Math.round((delayed / state.results.length) * 100)}%`;
+      els.rtStat.textContent = rt === null ? "-" : `${Math.round(rt)} ms`;
+      els.doneStat.textContent = `${state.results.length}/20`;
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? "");
+      return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+    }
+
+    function exportCsv() {
+      const headers = [
+        "participant_id",
+        "response_recorded_at",
+        "condition",
+        "entry_condition",
+        "task",
+        "task_version",
+        "session_id",
+        "session_started_at",
+        "session_finished_at",
+        "trial",
+        "immediate_amount",
+        "delayed_amount",
+        "delay_seconds",
+        "chosen_option",
+        "chosen_side",
+        "choice_rt_ms",
+        "waited_seconds",
+        "won_amount",
+        "total_after_feedback",
+        "attention_mind_wander"
+      ];
+      const csv = [
+        headers.join(","),
+        ...state.results.map((row) => headers.map((key) => csvEscape(row[key])).join(","))
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `delay-discounting-task-${new Date().toISOString().slice(0, 19).replaceAll(":", "-")}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function buildUploadRows() {
+      return state.results.map((row) => ({
+        ...row,
+        participant_id: workflow?.participant_id || row.participant_id || "",
+        entry_condition: ENTRY_LABELS[entryCondition] || entryCondition,
+        session_finished_at: state.finishedAt || new Date().toISOString(),
+        user_agent: navigator.userAgent
+      }));
+    }
+
+    async function uploadToGoogleSheets() {
+      if (!workflow || !state.results.length) return;
+      const payload = {
+        task: "star_task",
+        task_version: "star_20trial_experiential",
+        participant_id: workflow.participant_id,
+        entry_condition: entryCondition,
+        session_id: state.sessionId,
+        session_started_at: state.startedAt,
+        session_finished_at: state.finishedAt,
+        row_count: state.results.length,
+        rows: buildUploadRows()
+      };
+      try {
+        await fetch(workflow.sheet_url || DEFAULT_SHEET_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+      } catch (error) {
+        console.error("Google Sheets upload failed", error);
+      }
+    }
+
+    els.settingsToggle.addEventListener("click", () => {
+      const willOpen = els.settingsDrawer.hidden;
+      els.settingsDrawer.hidden = !willOpen;
+      els.settingsToggle.setAttribute("aria-expanded", String(willOpen));
+      els.settingsToggle.setAttribute("aria-label", willOpen ? "설정 닫기" : "설정 열기");
+    });
+    els.startBtn.addEventListener("click", startRun);
+    els.resetBtn.addEventListener("click", () => resetRun(true));
+    els.exportBtn.addEventListener("click", exportCsv);
+
+    resetRun(true);
+    showInitialIntro();
+  </script>
+</body>
+</html>
