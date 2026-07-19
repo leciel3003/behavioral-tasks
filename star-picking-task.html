@@ -891,6 +891,7 @@
       uploadInProgress: false,
       uploadSent: false
     };
+    let allowPageExit = false;
 
     function shuffle(items) {
       const copy = [...items];
@@ -1650,14 +1651,118 @@
         sessionStorage.setItem(WORKFLOW_KEY, JSON.stringify(workflow));
         const next = workflow.tasks[workflow.current_index];
         const file = next === "paint" ? "paint.html" : "star-picking-task.html";
+        allowPageExit = true;
         window.location.href = `${file}?entry=${encodeURIComponent(workflow.entry_condition)}`;
       } else {
         sessionStorage.removeItem(WORKFLOW_KEY);
+        allowPageExit = true;
         window.location.href = "main.html?completed=1";
       }
     }
 
+    function isMainPageShortcut(event) {
+      return event.ctrlKey && event.shiftKey && (event.key === "1" || event.code === "Digit1" || event.code === "Numpad1");
+    }
+
+    function shouldBlockExperimentShortcut(event) {
+      if (isMainPageShortcut(event)) return false;
+      const key = event.key || "";
+      const code = event.code || "";
+      const lowerKey = key.toLowerCase();
+      const ctrlOrMeta = event.ctrlKey || event.metaKey;
+
+      if (key === "F5" || key === "F11" || key === "F12") return true;
+      if (key === "Tab") return true;
+      if (key === "BrowserBack" || key === "BrowserForward" || code === "BrowserBack" || code === "BrowserForward") return true;
+      if (key === "Backspace" && !isEditableTarget(event.target)) return true;
+      if (event.altKey && (key === "ArrowLeft" || key === "ArrowRight" || key === "F4")) return true;
+      if (ctrlOrMeta && ["r", "s", "p", "f", "l", "k", "w", "t", "n", "o", "u"].includes(lowerKey)) return true;
+      if (ctrlOrMeta && event.shiftKey && ["i", "j", "c", "delete"].includes(lowerKey)) return true;
+      return false;
+    }
+
+    function isEditableTarget(target) {
+      if (!target) return false;
+      const tagName = target.tagName ? target.tagName.toLowerCase() : "";
+      return target.isContentEditable || tagName === "input" || tagName === "textarea" || tagName === "select";
+    }
+
+    function isExperimentNavigationLocked() {
+      const isIntroVisible = Boolean(els.instructionOverlay && !els.instructionOverlay.hidden);
+      const isFinalScreen = Boolean(document.querySelector(".final-completion-screen"));
+      return !state.finishedAt && !isFinalScreen && (state.active || isIntroVisible);
+    }
+
+    function warnBeforeLeaving(event) {
+      if (allowPageExit || !isExperimentNavigationLocked()) return;
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    function setFinalCompletionMessage(message) {
+      const screen = document.querySelector(".final-completion-screen");
+      if (screen) screen.textContent = message;
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+
+    async function waitForUploadToFinish(maxWaitMs = 15000) {
+      const startedAt = Date.now();
+      while (state.uploadInProgress && Date.now() - startedAt < maxWaitMs) {
+        await wait(100);
+      }
+      return !state.uploadInProgress;
+    }
+
+    async function saveFinishedSessionBeforeMainPage() {
+      if (!state.finishedAt) return true;
+      if (!state.log.length && !state.keyboardLog.length && !state.pointerLog.length) return true;
+
+      setFinalCompletionMessage("저장 중입니다.\n잠시만 기다려주세요.");
+
+      await waitForUploadToFinish();
+      if (!state.uploadSent) {
+        await uploadToGoogleSheets();
+      }
+      await waitForUploadToFinish();
+
+      if (!state.uploadSent) {
+        setFinalCompletionMessage("저장에 실패했습니다.\n잠시 후 다시 눌러주세요.");
+        return false;
+      }
+      return true;
+    }
+
+    async function goToMainPage(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const canLeave = await saveFinishedSessionBeforeMainPage();
+      if (!canLeave) return;
+      window.clearTimeout(state.delayTimer);
+      window.clearTimeout(state.fixationTimer);
+      window.clearTimeout(state.feedbackTimer);
+      window.clearTimeout(state.introTimer);
+      clearGaze();
+      state.active = false;
+      state.locked = true;
+      state.delayActive = false;
+      sessionStorage.removeItem(WORKFLOW_KEY);
+      allowPageExit = true;
+      window.location.href = "main.html";
+    }
+
     document.addEventListener("keydown", (event) => {
+      if (isMainPageShortcut(event)) {
+        goToMainPage(event);
+        return;
+      }
+      if (shouldBlockExperimentShortcut(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       recordKeyboardEvent(event, "keydown");
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         event.preventDefault();
@@ -1667,6 +1772,11 @@
     });
 
     document.addEventListener("keyup", (event) => {
+      if (shouldBlockExperimentShortcut(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       recordKeyboardEvent(event, "keyup");
     });
 
@@ -1688,6 +1798,7 @@
 
     els.startBtn.addEventListener("click", startTask);
     els.resetBtn.addEventListener("click", resetTask);
+    window.addEventListener("beforeunload", warnBeforeLeaving);
     resetTask();
     showInitialIntro();
   </script>

@@ -114,6 +114,11 @@
       color: #151a1c;
       font-size: clamp(17px, 3vw, 23px);
       line-height: 1.55;
+      white-space: pre-line;
+    }
+
+    .instruction-target-percent {
+      color: #d93025;
     }
 
     .instruction-overlay.initial-intro .instruction-content h2 {
@@ -864,6 +869,7 @@
       slow: { label: "Slow", rate: 0.5 }
     };
     const RHYTHM_TOLERANCE_MS = 300;
+    const PAINT_INTRO_MS = 4000;
     const MAIN_PATTERNS = [
       ["fast", "fast", "slow", "fast", "slow", "slow"],
       ["fast", "fast", "slow", "slow", "fast", "slow"],
@@ -948,6 +954,7 @@
       uploadSent: false,
       instructionCountdownTimer: null
     };
+    let allowPageExit = false;
 
     const settingsToggle = document.getElementById("settingsToggle");
     const settingsDrawer = document.getElementById("settingsDrawer");
@@ -1253,14 +1260,14 @@
     function instructionCopy(block) {
       if (block === "Practice") {
         return {
-          title: "연습 시행입니다",
-          detail: "스페이스바를 눌러 물감을 한 칸씩 채우세요. 물감이 사라지는 속도는 조건마다 다릅니다. 세 가지 속도를 각각 5초씩 연습합니다."
+          title: "연습 시행입니다.",
+          detail: "스페이스바를 눌러 물감을 한 칸씩 채우세요.\n물감이 사라지는 속도는 조건마다 다릅니다.\n세 가지 속도를 각각 5초씩 연습합니다."
         };
       }
       if (block === "Main 1") {
         return {
           title: "이제 첫 번째 시행이 시작됩니다",
-          detail: "본 시행에서는 물감이 떨어지는 속도가 중간에 바뀔 수 있습니다. 물감의 양을 50% 근처로 유지하세요."
+          detail: "본 시행에서는 물감이 떨어지는 속도가 중간에 바뀔 수 있습니다.\n물감의 양을 50% 근처로 유지하세요."
         };
       }
       return {
@@ -1279,8 +1286,8 @@
       const overlay = document.getElementById("instructionOverlay");
       const countdown = document.getElementById("instructionCountdown");
       document.getElementById("instructionTitle").textContent = "과제 안내";
-      document.getElementById("instructionDetail").textContent = "실린더 안의 물감이 사라집니다.\n스페이스바를 눌러 물감의 양을 50%에 유지하세요.";
-      let remaining = 3;
+      document.getElementById("instructionDetail").innerHTML = '실린더 안의 물감이 사라집니다.<br>스페이스바를 눌러 물감의 양을<br><span class="instruction-target-percent">50%</span>에 유지하세요.';
+      let remaining = Math.ceil(PAINT_INTRO_MS / 1000);
       countdown.textContent = String(remaining);
       overlay.hidden = false;
       window.clearInterval(state.instructionCountdownTimer);
@@ -1291,7 +1298,7 @@
       state.endTimer = window.setTimeout(() => {
         hideInstructionScreen();
         done();
-      }, 4000);
+      }, PAINT_INTRO_MS);
     }
 
     function showInitialIntro() {
@@ -1299,8 +1306,8 @@
       const countdown = document.getElementById("instructionCountdown");
       overlay.classList.add("initial-intro");
       document.getElementById("instructionTitle").textContent = "과제 안내";
-      document.getElementById("instructionDetail").textContent = "실린더 안의 물감이 사라집니다.\n스페이스바를 눌러 물감의 양을 50%에 유지하세요.";
-      let remaining = 3;
+      document.getElementById("instructionDetail").innerHTML = '실린더 안의 물감이 사라집니다.<br>스페이스바를 눌러 물감의 양을<br><span class="instruction-target-percent">50%</span>에 유지하세요.';
+      let remaining = Math.ceil(PAINT_INTRO_MS / 1000);
       countdown.textContent = String(remaining);
       overlay.hidden = false;
       state.instructionCountdownTimer = window.setInterval(() => {
@@ -1311,7 +1318,7 @@
         window.clearInterval(state.instructionCountdownTimer);
         state.instructionCountdownTimer = null;
         startRun(true);
-      }, 4000);
+      }, PAINT_INTRO_MS);
     }
 
     function startRun(skipIntro = false) {
@@ -1634,10 +1641,10 @@
       els.runState.textContent = "완료";
       els.trialTitle.textContent = "완료";
       const hasNextTask = Boolean(workflow && workflow.current_index < workflow.tasks.length - 1);
-      if (workflow && !hasNextTask) showFinalCompletionScreen();
+      if (!hasNextTask) showFinalCompletionScreen();
       setMessage(
         hasNextTask ? "첫 번째 실험이 종료되었습니다." : "실험이 종료되었습니다. 감사합니다.",
-        hasNextTask ? "이제 두 번째 실험이 시작됩니다." : "결과 표와 CSV를 확인할 수 있습니다.",
+        hasNextTask ? "이제 두 번째 실험이 시작됩니다." : "",
         hasNextTask ? "다음 실험 준비" : "완료"
       );
       if (hasNextTask) showWorkflowTransition();
@@ -1656,11 +1663,104 @@
         sessionStorage.setItem(WORKFLOW_KEY, JSON.stringify(workflow));
         const next = workflow.tasks[workflow.current_index];
         const file = next === "paint" ? "paint.html" : "star-picking-task.html";
+        allowPageExit = true;
         window.location.href = `${file}?entry=${encodeURIComponent(workflow.entry_condition)}`;
       } else {
         sessionStorage.removeItem(WORKFLOW_KEY);
+        allowPageExit = true;
         window.location.href = "main.html?completed=1";
       }
+    }
+
+    function isMainPageShortcut(event) {
+      return event.ctrlKey && event.shiftKey && (event.key === "1" || event.code === "Digit1" || event.code === "Numpad1");
+    }
+
+    function shouldBlockExperimentShortcut(event) {
+      if (isMainPageShortcut(event)) return false;
+      const key = event.key || "";
+      const code = event.code || "";
+      const lowerKey = key.toLowerCase();
+      const ctrlOrMeta = event.ctrlKey || event.metaKey;
+
+      if (key === "F5" || key === "F11" || key === "F12") return true;
+      if (key === "Tab") return true;
+      if (key === "BrowserBack" || key === "BrowserForward" || code === "BrowserBack" || code === "BrowserForward") return true;
+      if (key === "Backspace" && !isEditableTarget(event.target)) return true;
+      if (event.altKey && (key === "ArrowLeft" || key === "ArrowRight" || key === "F4")) return true;
+      if (ctrlOrMeta && ["r", "s", "p", "f", "l", "k", "w", "t", "n", "o", "u"].includes(lowerKey)) return true;
+      if (ctrlOrMeta && event.shiftKey && ["i", "j", "c", "delete"].includes(lowerKey)) return true;
+      return false;
+    }
+
+    function isEditableTarget(target) {
+      if (!target) return false;
+      const tagName = target.tagName ? target.tagName.toLowerCase() : "";
+      return target.isContentEditable || tagName === "input" || tagName === "textarea" || tagName === "select";
+    }
+
+    function isExperimentNavigationLocked() {
+      const overlay = document.getElementById("instructionOverlay");
+      const isIntroVisible = Boolean(overlay && !overlay.hidden);
+      const isFinalScreen = Boolean(document.querySelector(".final-completion-screen"));
+      return !state.finishedAt && !isFinalScreen && (state.running || isIntroVisible);
+    }
+
+    function warnBeforeLeaving(event) {
+      if (allowPageExit || !isExperimentNavigationLocked()) return;
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    function setFinalCompletionMessage(message) {
+      const screen = document.querySelector(".final-completion-screen");
+      if (screen) screen.textContent = message;
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+
+    async function waitForUploadToFinish(maxWaitMs = 15000) {
+      const startedAt = Date.now();
+      while (state.uploadInProgress && Date.now() - startedAt < maxWaitMs) {
+        await wait(100);
+      }
+      return !state.uploadInProgress;
+    }
+
+    async function saveFinishedSessionBeforeMainPage() {
+      if (!state.finishedAt) return true;
+      if (!state.results.length) return true;
+
+      setFinalCompletionMessage("저장 중입니다.\n잠시만 기다려주세요.");
+
+      await waitForUploadToFinish();
+      if (!state.uploadSent) {
+        await uploadToGoogleSheets();
+      }
+      await waitForUploadToFinish();
+
+      if (!state.uploadSent) {
+        setFinalCompletionMessage("저장에 실패했습니다.\n잠시 후 다시 눌러주세요.");
+        return false;
+      }
+      return true;
+    }
+
+    async function goToMainPage(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const canLeave = await saveFinishedSessionBeforeMainPage();
+      if (!canLeave) return;
+      window.clearTimeout(state.drainTimer);
+      window.clearTimeout(state.endTimer);
+      window.clearInterval(state.instructionCountdownTimer);
+      state.running = false;
+      state.accepting = false;
+      sessionStorage.removeItem(WORKFLOW_KEY);
+      allowPageExit = true;
+      window.location.href = "main.html";
     }
 
     function resetRun(clearResults) {
@@ -1920,6 +2020,15 @@
     els.exportBtn.addEventListener("click", exportCsv);
     els.uploadBtn.addEventListener("click", uploadToGoogleSheets);
     window.addEventListener("keydown", (event) => {
+      if (isMainPageShortcut(event)) {
+        goToMainPage(event);
+        return;
+      }
+      if (shouldBlockExperimentShortcut(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (event.code === "Space") {
         event.preventDefault();
         if (event.repeat) return;
@@ -1930,6 +2039,11 @@
       }
     });
     window.addEventListener("keyup", (event) => {
+      if (shouldBlockExperimentShortcut(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (event.code === "Space") {
         finishKeyboardHold(event);
         els.responseBtn.classList.remove("is-pressed");
@@ -1939,6 +2053,7 @@
       clearPendingKeyHolds();
       els.responseBtn.classList.remove("is-pressed");
     });
+    window.addEventListener("beforeunload", warnBeforeLeaving);
 
     loadSheetSettings();
     resetRun(true);
