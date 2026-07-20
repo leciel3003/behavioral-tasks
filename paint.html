@@ -790,7 +790,7 @@
             <input id="autoUpload" type="checkbox" checked>
             종료 시 Google Sheets 자동 저장
           </label>
-          <div class="badge">Main 1 2분 + Main 2 2분</div>
+          <div class="badge">Main 1 1분 20초 + Main 2 1분 20초</div>
           <p class="sheet-status" id="sheetStatus">시트 URL을 넣으면 결과를 Google Sheets로 보낼 수 있습니다.</p>
         </div>
         <div class="button-row">
@@ -886,18 +886,10 @@
     const RHYTHM_TOLERANCE_MS = 300;
     const PAINT_INTRO_MS = 4000;
     const MAIN_PATTERNS = [
-      ["fast", "fast", "slow", "fast", "slow", "slow"],
-      ["fast", "fast", "slow", "slow", "fast", "slow"],
-      ["fast", "slow", "fast", "fast", "slow", "slow"],
-      ["fast", "slow", "fast", "slow", "slow", "fast"],
-      ["fast", "slow", "slow", "fast", "fast", "slow"],
-      ["fast", "slow", "slow", "fast", "slow", "fast"],
-      ["slow", "fast", "fast", "slow", "fast", "slow"],
-      ["slow", "fast", "fast", "slow", "slow", "fast"],
-      ["slow", "fast", "slow", "fast", "fast", "slow"],
-      ["slow", "fast", "slow", "slow", "fast", "fast"],
-      ["slow", "slow", "fast", "fast", "slow", "fast"],
-      ["slow", "slow", "fast", "slow", "fast", "fast"]
+      ["fast", "fast", "slow", "slow"],
+      ["fast", "slow", "slow", "fast"],
+      ["slow", "slow", "fast", "fast"],
+      ["slow", "fast", "fast", "slow"]
     ];
     const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxx5I4hQLt56l5ZtPrgY2MAi_KOq7A_ngmgQW-2gU3MkjKuP4MCd4_rtVTi6kD_dHis/exec";
     const WORKFLOW_KEY = "behavioralTaskWorkflow";
@@ -1171,7 +1163,7 @@
         event_type: eventType,
         condition: trial.conditionLabel,
         task: "paint_task",
-        task_version: "paint_4min_main_practice5s_mainrandom_fs2patterns_C_segmentEvents_splitMetrics",
+        task_version: "paint_2m40s_main_practice5s_2fast2slow_each_main_segmentEvents_splitMetrics",
         session_id: state.sessionId,
         session_started_at: state.startedAt,
         phase: trial.phase,
@@ -1806,7 +1798,7 @@
       els.runState.textContent = "대기";
       els.trialTitle.textContent = "준비";
       els.trialBadge.textContent = "Space / 버튼 반응";
-      setMessage("시작을 누르면 진행됩니다.", "총 15초 연습 후 조건 숨김 본 시행 4분이 진행됩니다.");
+      setMessage("시작을 누르면 진행됩니다.", "총 15초 연습 후 조건 숨김 본 시행 2분 40초가 진행됩니다.");
       if (clearResults) {
         state.results = [];
         renderResults();
@@ -1997,7 +1989,7 @@
       const rows = buildUploadRows();
       const payload = {
         task: "paint_task",
-        task_version: "paint_4min_main_practice5s_mainrandom_fs2patterns_C_segmentEvents_splitMetrics",
+        task_version: "paint_2m40s_main_practice5s_2fast2slow_each_main_segmentEvents_splitMetrics",
         participant_id: els.participantId.value.trim(),
         entry_condition: entryCondition,
         session_id: state.sessionId,
