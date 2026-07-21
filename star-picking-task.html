@@ -36,6 +36,11 @@
       color: var(--ink);
     }
 
+    body.cursor-hidden,
+    body.cursor-hidden * {
+      cursor: none !important;
+    }
+
     button {
       font: inherit;
       -webkit-tap-highlight-color: transparent;
@@ -73,6 +78,7 @@
     .app.task-running .arena {
       min-height: 100vh;
       height: 100vh;
+      grid-template-rows: minmax(150px, 0.34fr) minmax(360px, 1fr);
       background: #ffffff;
     }
 
@@ -324,7 +330,6 @@
       place-items: center;
       gap: 8px;
       padding: clamp(18px, 3.6vh, 34px) 24px 18px;
-      border-bottom: 1px solid rgba(215, 208, 195, 0.86);
       background: #ffffff;
     }
 
@@ -532,11 +537,10 @@
 
     .feedback {
       position: absolute;
-      top: clamp(28px, 6vh, 58px);
-      left: 50%;
+      inset: 0;
       z-index: 7;
       display: none;
-      transform: translateX(-50%);
+      place-items: center;
       color: #151a1c;
       font-size: clamp(24px, 4vw, 38px);
       line-height: 1.2;
@@ -547,7 +551,7 @@
     }
 
     .feedback.is-visible {
-      display: block;
+      display: grid;
     }
 
     .running-stars {
@@ -1140,6 +1144,7 @@
     async function finishTask() {
       state.finishedAt = new Date().toISOString();
       await persistFinishedTask();
+      document.body.classList.remove("cursor-hidden");
       state.active = false;
       state.locked = true;
       clearGaze();
@@ -1191,8 +1196,8 @@
         target_star_id: trial.targetStar.id,
         target_star_color: trial.targetStar.colorId,
         target_star_pattern: trial.targetStar.patternId,
-        left_star_id: trial.leftStar.id,
-        right_star_id: trial.rightStar.id,
+        left_star_id: trial.leftStar?.id || "",
+        right_star_id: trial.rightStar?.id || "",
         distractor_shape: trial.distractorShape,
         delay_ms: trial.delayMs,
         analysis_included: trial.analysisIncluded ? 1 : 0,
@@ -1276,8 +1281,8 @@
         target_star_id: trial.targetStar.id,
         target_star_color: trial.targetStar.colorId,
         target_star_pattern: trial.targetStar.patternId,
-        left_star_id: trial.leftStar.id,
-        right_star_id: trial.rightStar.id,
+        left_star_id: trial.leftStar?.id || "",
+        right_star_id: trial.rightStar?.id || "",
         delay_duration_ms: trial.delayMs,
         delay_onset_ms: state.delayOnsetTaskMs,
         key_event_index: state.keyboardLog.filter((entry) => entry.trial_index === trial.number).length + 1,
@@ -1332,8 +1337,8 @@
         target_star_id: trial.targetStar.id,
         target_star_color: trial.targetStar.colorId,
         target_star_pattern: trial.targetStar.patternId,
-        left_star_id: trial.leftStar.id,
-        right_star_id: trial.rightStar.id,
+        left_star_id: trial.leftStar?.id || "",
+        right_star_id: trial.rightStar?.id || "",
         delay_duration_ms: trial.delayMs,
         delay_onset_ms: state.delayOnsetTaskMs,
         analysis_included: trial.analysisIncluded ? 1 : 0,
@@ -1392,6 +1397,7 @@
       window.clearTimeout(state.fixationTimer);
       window.clearTimeout(state.feedbackTimer);
       window.clearTimeout(state.introTimer);
+      document.body.classList.remove("cursor-hidden");
       clearGaze();
       state.trials = buildTrials();
       state.currentIndex = -1;
@@ -1424,6 +1430,15 @@
       renderLog();
     }
 
+    async function enterFullscreen() {
+      if (document.fullscreenElement || !document.documentElement.requestFullscreen) return;
+      try {
+        await document.documentElement.requestFullscreen();
+      } catch (error) {
+        console.info("Fullscreen request was ignored by the browser.", error);
+      }
+    }
+
     function beginTask() {
       els.instructionOverlay.hidden = true;
       document.querySelector(".app").classList.add("task-running");
@@ -1454,13 +1469,14 @@
 
     function showInitialIntro() {
       resetTask();
+      document.body.classList.add("cursor-hidden");
       state.sessionId = window.crypto && typeof window.crypto.randomUUID === "function"
         ? window.crypto.randomUUID()
         : `star-session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       state.startedAt = new Date().toISOString();
       state.taskStartedPerformance = performance.now();
       els.startBtn.disabled = true;
-      els.instructionDetail.textContent = "별 모으기 과제입니다.\n아래 두 별 중 위 별과 같은 별을 고르세요.";
+      els.instructionDetail.textContent = "별 모으기 과제입니다.\n별을 계속해서 응시해 주세요.";
       els.instructionNote.textContent = "";
       els.instructionNote.hidden = true;
       els.instructionOverlay.hidden = false;
@@ -1468,6 +1484,7 @@
     }
 
     function startTask() {
+      enterFullscreen();
       showInitialIntro();
     }
 
@@ -1480,7 +1497,7 @@
         condition: getStarCondition({ type: row.type }),
         entry_condition: entryCondition,
         task: "star_task",
-        task_version: "star_picking_45trial_30normal_10short5s_5long10s_keyboard_pointer_log",
+        task_version: "star_picking_45trial_target_match_center_feedback_hidden_cursor",
         session_id: state.sessionId,
         session_started_at: state.startedAt,
         session_finished_at: state.finishedAt,
@@ -1523,7 +1540,7 @@
         condition: row.condition,
         entry_condition: entryCondition,
         task: "star_task",
-        task_version: "star_picking_45trial_30normal_10short5s_5long10s_keyboard_pointer_log",
+        task_version: "star_picking_45trial_target_match_center_feedback_hidden_cursor",
         session_id: state.sessionId,
         session_started_at: state.startedAt,
         session_finished_at: state.finishedAt,
@@ -1565,7 +1582,7 @@
         condition: row.condition,
         entry_condition: entryCondition,
         task: "star_task",
-        task_version: "star_picking_45trial_30normal_10short5s_5long10s_keyboard_pointer_log",
+        task_version: "star_picking_45trial_target_match_center_feedback_hidden_cursor",
         session_id: state.sessionId,
         session_started_at: state.startedAt,
         session_finished_at: state.finishedAt,
@@ -1620,7 +1637,7 @@
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             task: "star_task",
-            task_version: "star_picking_45trial_30normal_10short5s_5long10s_keyboard_pointer_log",
+            task_version: "star_picking_45trial_target_match_center_feedback_hidden_cursor",
             participant_id: workflow?.participant_id || "",
             entry_condition: entryCondition,
             session_id: state.sessionId,
@@ -1795,6 +1812,9 @@
     document.addEventListener("click", (event) => {
       recordPointerEvent(event, "click");
     });
+
+    document.addEventListener("pointerdown", enterFullscreen);
+    document.addEventListener("keydown", enterFullscreen);
 
     els.startBtn.addEventListener("click", startTask);
     els.resetBtn.addEventListener("click", resetTask);

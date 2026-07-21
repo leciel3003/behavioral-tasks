@@ -32,6 +32,11 @@
       color: var(--ink);
     }
 
+    body.cursor-hidden,
+    body.cursor-hidden * {
+      cursor: none !important;
+    }
+
     button,
     input,
     select {
@@ -1309,6 +1314,7 @@
     }
 
     function showInitialIntro() {
+      document.body.classList.add("cursor-hidden");
       const overlay = document.getElementById("instructionOverlay");
       const countdown = document.getElementById("instructionCountdown");
       overlay.classList.add("initial-intro");
@@ -1330,6 +1336,7 @@
 
     function startRun(skipIntro = false) {
       resetRun(true);
+      document.body.classList.add("cursor-hidden");
       saveSheetSettings();
       state.sessionId = makeSessionId();
       state.startedAt = new Date().toISOString();
@@ -1637,6 +1644,7 @@
     async function finishRun() {
       hideInstructionScreen();
       state.running = false;
+      document.body.classList.remove("cursor-hidden");
       app.classList.remove("task-running");
       state.accepting = false;
       state.trial = null;
@@ -1763,6 +1771,7 @@
       window.clearTimeout(state.drainTimer);
       window.clearTimeout(state.endTimer);
       window.clearInterval(state.instructionCountdownTimer);
+      document.body.classList.remove("cursor-hidden");
       state.running = false;
       state.accepting = false;
       sessionStorage.removeItem(WORKFLOW_KEY);
@@ -1774,6 +1783,7 @@
       hideInstructionScreen();
       window.clearTimeout(state.drainTimer);
       window.clearTimeout(state.endTimer);
+      document.body.classList.remove("cursor-hidden");
       state.running = false;
       app.classList.remove("task-running");
       state.accepting = false;
