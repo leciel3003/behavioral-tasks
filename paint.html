@@ -310,6 +310,11 @@
       text-align: center;
     }
 
+    .level-guidance.is-feedback {
+      color: #151a1c;
+      font-weight: 700;
+    }
+
     .battery {
       position: relative;
       width: min(260px, 64vw);
@@ -964,7 +969,8 @@
       finishedAt: "",
       uploadInProgress: false,
       uploadSent: false,
-      instructionCountdownTimer: null
+      instructionCountdownTimer: null,
+      practiceFeedbackTimer: null
     };
     let allowPageExit = false;
 
@@ -1168,7 +1174,7 @@
         event_type: eventType,
         condition: trial.conditionLabel,
         task: "paint_task",
-        task_version: "paint_2m40s_main_practice5s_2fast2slow_each_main_segmentEvents_splitMetrics",
+        task_version: "paint_2m40s_main_practice5s_2fast2slow_each_main_segmentEvents_splitMetrics_practiceAccFeedback",
         session_id: state.sessionId,
         session_started_at: state.startedAt,
         phase: trial.phase,
@@ -1227,8 +1233,18 @@
     }
 
     function setCells(value) {
+      const previousCells = state.cells;
       state.cells = Math.max(0, Math.min(CELL_COUNT, Math.round(value)));
       renderBattery();
+      if (
+        state.running &&
+        state.accepting &&
+        state.trial?.phase === "Practice" &&
+        previousCells !== TARGET_CELLS &&
+        state.cells === TARGET_CELLS
+      ) {
+        showPracticeAccuracyFeedback();
+      }
     }
 
     function renderBattery() {
@@ -1242,6 +1258,7 @@
         els.batteryCells.appendChild(cell);
       }
       els.levelLabel.textContent = `${state.cells}/${CELL_COUNT}칸`;
+      if (els.levelGuidance.classList.contains("is-feedback")) return;
       if (state.cells <= TARGET_CELLS - 2) {
         els.levelGuidance.textContent = "물감을 채워주세요!";
       } else if (state.cells >= TARGET_CELLS + 2) {
@@ -1249,6 +1266,24 @@
       } else {
         els.levelGuidance.textContent = "";
       }
+    }
+
+    function clearPracticeFeedback(restoreGuidance = true) {
+      window.clearTimeout(state.practiceFeedbackTimer);
+      state.practiceFeedbackTimer = null;
+      const wasFeedbackVisible = els.levelGuidance.classList.contains("is-feedback");
+      els.levelGuidance.classList.remove("is-feedback");
+      if (restoreGuidance) renderBattery();
+      else if (wasFeedbackVisible) els.levelGuidance.textContent = "";
+    }
+
+    function showPracticeAccuracyFeedback() {
+      window.clearTimeout(state.practiceFeedbackTimer);
+      els.levelGuidance.classList.add("is-feedback");
+      els.levelGuidance.textContent = "정확해요!";
+      state.practiceFeedbackTimer = window.setTimeout(() => {
+        clearPracticeFeedback(true);
+      }, 650);
     }
 
     function setLocked(locked) {
@@ -1334,8 +1369,18 @@
       }, PAINT_INTRO_MS);
     }
 
+    async function enterFullscreen() {
+      if (document.fullscreenElement || !document.documentElement.requestFullscreen) return;
+      try {
+        await document.documentElement.requestFullscreen();
+      } catch (error) {
+        console.info("Fullscreen request was ignored by the browser.", error);
+      }
+    }
+
     function startRun(skipIntro = false) {
       resetRun(true);
+      enterFullscreen();
       document.body.classList.add("cursor-hidden");
       saveSheetSettings();
       state.sessionId = makeSessionId();
@@ -1437,6 +1482,7 @@
 
     function beginCurrentSegment() {
       if (!state.running || !state.trial) return;
+      clearPracticeFeedback(false);
       const now = performance.now();
       state.trialStart = state.trialStart || now;
       state.segmentStartedAt = now;
@@ -1600,6 +1646,7 @@
       if (!state.trial) return;
       window.clearTimeout(state.drainTimer);
       window.clearTimeout(state.endTimer);
+      clearPracticeFeedback(false);
       if (state.trial.type === "instruction") hideInstructionScreen();
       if (state.trial.type !== "instruction") {
         clearPendingKeyHolds();
@@ -1644,6 +1691,7 @@
     async function finishRun() {
       hideInstructionScreen();
       state.running = false;
+      clearPracticeFeedback(false);
       document.body.classList.remove("cursor-hidden");
       app.classList.remove("task-running");
       state.accepting = false;
@@ -1698,7 +1746,7 @@
       const lowerKey = key.toLowerCase();
       const ctrlOrMeta = event.ctrlKey || event.metaKey;
 
-      if (key === "F5" || key === "F11" || key === "F12") return true;
+      if (key === "F5" || key === "F12") return true;
       if (key === "Tab") return true;
       if (key === "BrowserBack" || key === "BrowserForward" || code === "BrowserBack" || code === "BrowserForward") return true;
       if (key === "Backspace" && !isEditableTarget(event.target)) return true;
@@ -1771,6 +1819,7 @@
       window.clearTimeout(state.drainTimer);
       window.clearTimeout(state.endTimer);
       window.clearInterval(state.instructionCountdownTimer);
+      clearPracticeFeedback(false);
       document.body.classList.remove("cursor-hidden");
       state.running = false;
       state.accepting = false;
@@ -1783,6 +1832,7 @@
       hideInstructionScreen();
       window.clearTimeout(state.drainTimer);
       window.clearTimeout(state.endTimer);
+      clearPracticeFeedback(false);
       document.body.classList.remove("cursor-hidden");
       state.running = false;
       app.classList.remove("task-running");
@@ -1999,7 +2049,7 @@
       const rows = buildUploadRows();
       const payload = {
         task: "paint_task",
-        task_version: "paint_2m40s_main_practice5s_2fast2slow_each_main_segmentEvents_splitMetrics",
+        task_version: "paint_2m40s_main_practice5s_2fast2slow_each_main_segmentEvents_splitMetrics_practiceAccFeedback",
         participant_id: els.participantId.value.trim(),
         entry_condition: entryCondition,
         session_id: state.sessionId,
@@ -2036,6 +2086,8 @@
     els.responseBtn.addEventListener("click", () => respond({ input_source: "button", is_auto_repeat: 0 }));
     els.exportBtn.addEventListener("click", exportCsv);
     els.uploadBtn.addEventListener("click", uploadToGoogleSheets);
+    document.addEventListener("pointerdown", enterFullscreen);
+    document.addEventListener("keydown", enterFullscreen);
     window.addEventListener("keydown", (event) => {
       if (isMainPageShortcut(event)) {
         goToMainPage(event);
