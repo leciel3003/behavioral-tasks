@@ -1166,9 +1166,19 @@
       screen.className = "final-completion-screen";
       screen.setAttribute("role", "status");
       screen.setAttribute("aria-live", "polite");
-      screen.textContent = "실험이 종료되었습니다.\n감사합니다.";
+      screen.innerHTML = `
+        <div>
+          <div>실험이 종료되었습니다.<br>감사합니다.</div>
+          <button class="primary" type="button" id="finalBackToMainBtn" style="margin-top:32px;min-height:72px;padding:0 28px;border-radius:10px;">메인 페이지로 돌아가기</button>
+        </div>
+      `;
       screen.style.cssText = "position:fixed;inset:0;z-index:999999;display:grid;place-items:center;padding:32px;background:#ffffff;color:#111111;font-size:clamp(25px,4.8vw,42px);font-weight:700;line-height:1.35;text-align:center;white-space:pre-line;";
       document.body.appendChild(screen);
+      document.getElementById("finalBackToMainBtn").addEventListener("click", () => {
+        sessionStorage.removeItem(WORKFLOW_KEY);
+        allowPageExit = true;
+        window.location.href = "main.html";
+      });
     }
 
     async function finishTask() {
@@ -1190,7 +1200,7 @@
       document.querySelector(".app").classList.remove("task-running");
       setOverlay(true, "완료", `총 ${state.coins}개의 별을 얻었습니다.`);
       const hasNextTask = Boolean(workflow && workflow.current_index < workflow.tasks.length - 1);
-      if (workflow && !hasNextTask) showFinalCompletionScreen();
+      if (!hasNextTask) showFinalCompletionScreen();
       if (hasNextTask) {
         setOverlay(false);
         showWorkflowTransition();
@@ -1243,21 +1253,12 @@
       if (trial.phase === "Practice") {
         showPracticeFeedback(correct);
       } else if (!correct) {
-        showIncorrectFeedback();
+        nextTrial();
       } else if (trial.delayMs > 0) {
         runDelay(correct, earned);
       } else {
         showFeedback(earned, nextTrial);
       }
-    }
-
-    function showIncorrectFeedback() {
-      els.feedback.textContent = "?ㅻ떟?낅땲??";
-      els.feedback.classList.add("is-visible");
-      state.feedbackTimer = window.setTimeout(() => {
-        els.feedback.classList.remove("is-visible");
-        nextTrial();
-      }, FEEDBACK_MS);
     }
 
     function showPracticeFeedback(correct) {
@@ -1529,7 +1530,7 @@
       setEnabled(false);
       els.fixation.classList.remove("is-visible");
       els.feedback.classList.remove("is-visible");
-      showInstructionStep("이제 첫 번째 시행이 시작됩니다.", "", () => {
+      showInstructionStep("실험을 시작합니다.", "", () => {
         els.instructionOverlay.hidden = true;
         state.locked = false;
         state.active = true;
@@ -1720,8 +1721,8 @@
       }
     }
 
-    function persistFinishedTask() {
-      uploadToGoogleSheets();
+    async function persistFinishedTask() {
+      await uploadToGoogleSheets();
       if (!workflow) return;
       window.setTimeout(advanceWorkflow, workflow.current_index < workflow.tasks.length - 1 ? 3000 : 1500);
     }
