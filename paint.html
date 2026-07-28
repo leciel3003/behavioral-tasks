@@ -144,6 +144,12 @@
       display: none;
     }
 
+    .instruction-countdown.is-enter-prompt {
+      display: block;
+      font-size: clamp(18px, 3vw, 28px);
+      line-height: 1.35;
+    }
+
     .settings-drawer {
       margin: 0 auto 16px;
       max-width: 760px;
@@ -295,9 +301,25 @@
     }
 
     .battery-wrap {
+      position: relative;
       display: grid;
       justify-items: center;
       gap: 12px;
+    }
+
+    .battery-wrap::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 235px;
+      width: calc(min(260px, 64vw) + 96px);
+      height: 6px;
+      transform: translate(-50%, -3px);
+      border-radius: 999px;
+      background: #d93025;
+      box-shadow: 0 0 0 2px rgba(217, 48, 37, .16), 0 2px 8px rgba(143, 41, 37, .32);
+      z-index: 8;
+      pointer-events: none;
     }
 
     .level-guidance {
@@ -401,8 +423,7 @@
     }
 
     .cell.target {
-      outline: 2px solid rgba(201, 70, 70, .7);
-      outline-offset: -2px;
+      outline: 0;
     }
 
     .paint-fill {
@@ -419,14 +440,16 @@
 
     .target-line {
       position: absolute;
-      left: -18px;
-      right: -18px;
+      left: -48px;
+      right: -48px;
       top: 50%;
-      height: 4px;
-      transform: translateY(-2px);
-      background: #f4d4bc;
-      box-shadow: 0 0 0 4px rgba(201, 70, 70, 0.14);
-      z-index: 4;
+      height: 6px;
+      transform: translateY(-3px);
+      border-radius: 999px;
+      background: #d93025;
+      box-shadow: 0 0 0 2px rgba(217, 48, 37, .16), 0 2px 8px rgba(143, 41, 37, .32);
+      z-index: 6;
+      pointer-events: none;
     }
 
     .target-label {
@@ -516,6 +539,8 @@
     }
 
     .practice-hint {
+      position: relative;
+      top: 18px;
       margin: 0 0 12px;
       color: #000;
       font-size: 27px;
@@ -708,6 +733,11 @@
         width: min(200px, 56vw);
         height: 330px;
         border-width: 4px;
+      }
+
+      .battery-wrap::before {
+        top: 165px;
+        width: calc(min(200px, 56vw) + 80px);
       }
 
       .battery-cells { gap: 2px; padding: 7px; }
@@ -970,6 +1000,7 @@
       uploadInProgress: false,
       uploadSent: false,
       instructionCountdownTimer: null,
+      pendingInstructionAction: null,
       practiceFeedbackTimer: null
     };
     let allowPageExit = false;
@@ -1326,7 +1357,27 @@
     function hideInstructionScreen() {
       window.clearInterval(state.instructionCountdownTimer);
       state.instructionCountdownTimer = null;
+      state.pendingInstructionAction = null;
       document.getElementById("instructionOverlay").hidden = true;
+    }
+
+    function waitForInstructionEnter(action) {
+      const prompt = document.getElementById("instructionCountdown");
+      window.clearInterval(state.instructionCountdownTimer);
+      state.instructionCountdownTimer = null;
+      prompt.textContent = "이해했으면 엔터를 눌러 주세요.";
+      prompt.classList.add("is-enter-prompt");
+      prompt.style.display = "block";
+      state.pendingInstructionAction = action;
+    }
+
+    function completeInstructionEnter() {
+      if (!state.pendingInstructionAction) return false;
+      const action = state.pendingInstructionAction;
+      state.pendingInstructionAction = null;
+      document.getElementById("instructionCountdown").classList.remove("is-enter-prompt");
+      action();
+      return true;
     }
 
     function startIntroScreen(done) {
@@ -1334,18 +1385,12 @@
       const countdown = document.getElementById("instructionCountdown");
       document.getElementById("instructionTitle").textContent = "과제 안내";
       document.getElementById("instructionDetail").innerHTML = '실린더 안의 물감이 사라집니다.<br>스페이스바를 눌러 물감의 양을<br><span class="instruction-target-percent">50%</span>에 유지하세요.';
-      let remaining = Math.ceil(PAINT_INTRO_MS / 1000);
-      countdown.textContent = String(remaining);
+      countdown.classList.remove("is-enter-prompt");
       overlay.hidden = false;
-      window.clearInterval(state.instructionCountdownTimer);
-      state.instructionCountdownTimer = window.setInterval(() => {
-        remaining -= 1;
-        countdown.textContent = String(Math.max(0, remaining));
-      }, 1000);
-      state.endTimer = window.setTimeout(() => {
+      waitForInstructionEnter(() => {
         hideInstructionScreen();
         done();
-      }, PAINT_INTRO_MS);
+      });
     }
 
     function showInitialIntro() {
@@ -1355,18 +1400,11 @@
       overlay.classList.add("initial-intro");
       document.getElementById("instructionTitle").textContent = "과제 안내";
       document.getElementById("instructionDetail").innerHTML = '실린더 안의 물감이 사라집니다.<br>스페이스바를 눌러 물감의 양을<br><span class="instruction-target-percent">50%</span>에 유지하세요.';
-      let remaining = Math.ceil(PAINT_INTRO_MS / 1000);
-      countdown.textContent = String(remaining);
+      countdown.classList.remove("is-enter-prompt");
       overlay.hidden = false;
-      state.instructionCountdownTimer = window.setInterval(() => {
-        remaining -= 1;
-        countdown.textContent = String(Math.max(0, remaining));
-      }, 1000);
-      window.setTimeout(() => {
-        window.clearInterval(state.instructionCountdownTimer);
-        state.instructionCountdownTimer = null;
+      waitForInstructionEnter(() => {
         startRun(true);
-      }, PAINT_INTRO_MS);
+      });
     }
 
     async function enterFullscreen() {
@@ -1469,15 +1507,9 @@
       const countdown = document.getElementById("instructionCountdown");
       document.getElementById("instructionTitle").textContent = copy.title;
       document.getElementById("instructionDetail").textContent = copy.detail;
-      let remaining = state.trial.durationSeconds;
-      countdown.textContent = String(remaining);
+      countdown.classList.remove("is-enter-prompt");
       overlay.hidden = false;
-      window.clearInterval(state.instructionCountdownTimer);
-      state.instructionCountdownTimer = window.setInterval(() => {
-        remaining -= 1;
-        countdown.textContent = String(Math.max(0, remaining));
-      }, 1000);
-      state.endTimer = window.setTimeout(endTrial, state.trial.durationSeconds * 1000);
+      waitForInstructionEnter(endTrial);
     }
 
     function beginCurrentSegment() {
@@ -2094,6 +2126,11 @@
         return;
       }
       if (shouldBlockExperimentShortcut(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      if (event.key === "Enter" && completeInstructionEnter()) {
         event.preventDefault();
         event.stopPropagation();
         return;

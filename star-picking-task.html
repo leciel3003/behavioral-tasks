@@ -804,10 +804,11 @@
 
   <script>
     const TOTAL_TRIALS = 45;
+    const PRACTICE_TRIALS = 3;
     const NORMAL_TRIALS = 30;
     const SHORT_DELAY_TRIALS = 10;
     const LONG_DELAY_TRIALS = 5;
-    const INITIAL_NORMAL_TRIALS = 4;
+    const INITIAL_NORMAL_TRIALS = 10;
     const DWELL_MS = 800;
     const SHORT_DELAY_MS = 5000;
     const LONG_DELAY_MS = 10000;
@@ -893,7 +894,8 @@
       startedAt: "",
       finishedAt: "",
       uploadInProgress: false,
-      uploadSent: false
+      uploadSent: false,
+      pendingInstructionAction: null
     };
     let allowPageExit = false;
 
@@ -933,28 +935,42 @@
     }
 
     function buildTrials() {
+      const practiceTrials = Array.from({ length: PRACTICE_TRIALS }, (_, index) => ({
+        type: "practice",
+        phase: "Practice",
+        number: `P${index + 1}`,
+        practiceNumber: index + 1
+      }));
       const warmupTypes = Array.from({ length: INITIAL_NORMAL_TRIALS }, () => "normal");
       const remainingTypes = shuffle([
         ...Array.from({ length: NORMAL_TRIALS - warmupTypes.length }, () => "normal"),
         ...Array.from({ length: SHORT_DELAY_TRIALS }, () => "short_delay"),
         ...Array.from({ length: LONG_DELAY_TRIALS }, () => "long_delay")
       ]);
-      const types = [...warmupTypes, ...remainingTypes];
-      const targetStars = buildStarSequence(types.length);
+      const mainTrials = [...warmupTypes, ...remainingTypes].map((type, index) => ({
+        type,
+        phase: "Main",
+        number: index + 1,
+        practiceNumber: ""
+      }));
+      const trialConfigs = [...practiceTrials, ...mainTrials];
+      const targetStars = buildStarSequence(trialConfigs.length);
 
-      return types.map((type, index) => {
+      return trialConfigs.map((trialConfig, index) => {
         const targetStar = targetStars[index];
         const foilStar = pickFoilStar(targetStar);
         const targetSide = Math.random() > 0.5 ? "left" : "right";
         return {
-          number: index + 1,
-          type,
-          delayMs: type === "short_delay"
+          number: trialConfig.number,
+          phase: trialConfig.phase,
+          practiceNumber: trialConfig.practiceNumber,
+          type: trialConfig.type,
+          delayMs: trialConfig.type === "short_delay"
             ? SHORT_DELAY_MS
-            : type === "long_delay"
+            : trialConfig.type === "long_delay"
               ? LONG_DELAY_MS
               : 0,
-          analysisIncluded: type === "normal" || type === "short_delay" || type === "long_delay",
+          analysisIncluded: trialConfig.phase === "Main",
           targetSide,
           starCount: 1,
           targetStar,
@@ -1029,11 +1045,12 @@
     }
 
     function renderStatus() {
-      const completed = state.log.length;
+      const completed = state.log.filter((row) => row.analysis_included).length;
+      const mainTrials = state.trials.filter((trial) => trial.phase === "Main");
       els.trialText.textContent = `${completed} / ${TOTAL_TRIALS}`;
       els.coinText.textContent = String(state.coins);
       els.runningStars.textContent = `누적 별 ${state.coins}개`;
-      els.normalText.textContent = String(state.trials.filter((trial) => trial.type === "normal").length || NORMAL_TRIALS);
+      els.normalText.textContent = String(mainTrials.filter((trial) => trial.type === "normal").length || NORMAL_TRIALS);
       els.totalText.textContent = String(TOTAL_TRIALS);
       els.progressFill.style.width = `${Math.round((completed / TOTAL_TRIALS) * 100)}%`;
     }
@@ -1073,10 +1090,17 @@
       renderStimulus(els.leftStimulus, trial, "left");
       renderStimulus(els.rightStimulus, trial, "right");
 
-      els.trialType.textContent = "진행 중";
-      els.message.textContent = "목표와 같은 별을 고르세요.";
-      els.trialText.textContent = `${trial.number} / ${TOTAL_TRIALS}`;
-      els.progressFill.style.width = `${Math.round(((trial.number - 1) / TOTAL_TRIALS) * 100)}%`;
+      if (trial.phase === "Practice") {
+        els.trialType.textContent = "연습";
+        els.message.textContent = "연습 시행입니다.";
+        els.trialText.textContent = `연습 ${trial.practiceNumber} / ${PRACTICE_TRIALS}`;
+        els.progressFill.style.width = "0%";
+      } else {
+        els.trialType.textContent = "진행 중";
+        els.message.textContent = "목표와 같은 별을 고르세요.";
+        els.trialText.textContent = `${trial.number} / ${TOTAL_TRIALS}`;
+        els.progressFill.style.width = `${Math.round(((trial.number - 1) / TOTAL_TRIALS) * 100)}%`;
+      }
     }
 
     function showFixation() {
@@ -1114,8 +1138,16 @@
       window.clearTimeout(state.feedbackTimer);
       state.currentIndex += 1;
 
-      if (state.currentIndex >= TOTAL_TRIALS) {
+      if (state.currentIndex >= state.trials.length) {
         finishTask();
+        return;
+      }
+
+      if (
+        state.currentIndex === PRACTICE_TRIALS &&
+        state.trials[state.currentIndex]?.phase === "Main"
+      ) {
+        showPostPracticeIntro();
         return;
       }
 
@@ -1173,10 +1205,11 @@
       const trial = state.trials[state.currentIndex];
       const correct = side === trial.targetSide;
       const earned = correct ? trial.starCount : 0;
+      const countedEarned = trial.analysisIncluded ? earned : 0;
       const responseRtMs = state.trialPresentedAt
         ? Math.round(performance.now() - state.trialPresentedAt)
         : "";
-      state.coins += earned;
+      state.coins += countedEarned;
       state.locked = true;
       setEnabled(false);
       clearGaze();
@@ -1189,7 +1222,7 @@
         number: trial.number,
         type: trial.type,
         correct,
-        earned,
+        earned: countedEarned,
         chosen_side: side,
         target_side: trial.targetSide,
         star_count: trial.starCount,
@@ -1209,7 +1242,9 @@
       renderStatus();
       renderLog();
 
-      if (!correct) {
+      if (trial.phase === "Practice") {
+        showPracticeFeedback(correct);
+      } else if (!correct) {
         showIncorrectFeedback();
       } else if (trial.delayMs > 0) {
         runDelay(correct, earned);
@@ -1220,6 +1255,15 @@
 
     function showIncorrectFeedback() {
       els.feedback.textContent = "오답입니다.";
+      els.feedback.classList.add("is-visible");
+      state.feedbackTimer = window.setTimeout(() => {
+        els.feedback.classList.remove("is-visible");
+        nextTrial();
+      }, FEEDBACK_MS);
+    }
+
+    function showPracticeFeedback(correct) {
+      els.feedback.textContent = correct ? "정답입니다!" : "틀렸습니다.";
       els.feedback.classList.add("is-visible");
       state.feedbackTimer = window.setTimeout(() => {
         els.feedback.classList.remove("is-visible");
@@ -1244,6 +1288,7 @@
     }
 
     function getStarCondition(trial) {
+      if (trial.type === "practice") return "practice-no-delay";
       if (trial.type === "short_delay") return "delay-5s";
       if (trial.type === "long_delay") return "delay-10s";
       if (trial.type === "normal") return "no-delay";
@@ -1411,6 +1456,7 @@
       state.keyboardLog = [];
       state.pointerLog = [];
       state.pendingKeydowns = {};
+      state.pendingInstructionAction = null;
       setEnabled(false);
       els.targetStimulus.textContent = "";
       els.leftStimulus.textContent = "";
@@ -1446,25 +1492,52 @@
       nextTrial();
     }
 
-    function showCursorIntro() {
-      els.instructionDetail.textContent = "왼쪽/오른쪽 화살표 키로 답합니다.";
-      els.instructionNote.textContent = "";
+    function showInstructionStep(detail, note, action) {
+      window.clearTimeout(state.introTimer);
+      els.instructionDetail.textContent = detail;
+      els.instructionNote.textContent = note
+        ? `${note}\n이해했으면 엔터를 눌러 주세요.`
+        : "이해했으면 엔터를 눌러 주세요.";
       els.instructionNote.hidden = false;
-      state.introTimer = window.setTimeout(showRewardIntro, INTRO_MS);
+      els.instructionOverlay.hidden = false;
+      state.pendingInstructionAction = action;
+    }
+
+    function completeInstructionEnter() {
+      if (!state.pendingInstructionAction) return false;
+      const action = state.pendingInstructionAction;
+      state.pendingInstructionAction = null;
+      action();
+      return true;
+    }
+
+    function showCursorIntro() {
+      showInstructionStep("왼쪽/오른쪽 화살표 키로 답합니다.", "", showRewardIntro);
     }
 
     function showRewardIntro() {
-      els.instructionDetail.textContent = "맞히면 별 1개를 모읍니다.";
-      els.instructionNote.textContent = "이후 선물로 교환할 수 있습니다.";
-      els.instructionNote.hidden = false;
-      state.introTimer = window.setTimeout(showFixationIntro, INTRO_MS);
+      showInstructionStep("맞히면 별 1개를 모읍니다.", "이후 선물로 교환할 수 있습니다.", showFixationIntro);
     }
 
     function showFixationIntro() {
-      els.instructionDetail.textContent = "+가 나오면 화면 중앙을 봐 주세요.\n곧 시작합니다.";
-      els.instructionNote.textContent = "";
-      els.instructionNote.hidden = true;
-      state.introTimer = window.setTimeout(beginTask, INTRO_MS);
+      showInstructionStep("+가 나오면 화면 중앙을 봐 주세요.\n곧 시작합니다.", "", showPracticeIntro);
+    }
+
+    function showPracticeIntro() {
+      showInstructionStep("연습 시행입니다.\n목표 별과 같은 별을 고르세요.", "", beginTask);
+    }
+
+    function showPostPracticeIntro() {
+      state.locked = true;
+      setEnabled(false);
+      els.fixation.classList.remove("is-visible");
+      els.feedback.classList.remove("is-visible");
+      showInstructionStep("이제 첫 번째 시행이 시작됩니다.", "", () => {
+        els.instructionOverlay.hidden = true;
+        state.locked = false;
+        state.active = true;
+        showFixation();
+      });
     }
 
     function showInitialIntro() {
@@ -1476,11 +1549,7 @@
       state.startedAt = new Date().toISOString();
       state.taskStartedPerformance = performance.now();
       els.startBtn.disabled = true;
-      els.instructionDetail.textContent = "별 모으기 과제입니다.\n상단의 별과 같은 별을 찾아 주세요.";
-      els.instructionNote.textContent = "";
-      els.instructionNote.hidden = true;
-      els.instructionOverlay.hidden = false;
-      state.introTimer = window.setTimeout(showCursorIntro, INTRO_MS);
+      showInstructionStep("별 모으기 과제입니다.\n상단의 별과 같은 별을 찾아 주세요.", "", showCursorIntro);
     }
 
     function startTask() {
@@ -1776,6 +1845,11 @@
         return;
       }
       if (shouldBlockExperimentShortcut(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      if (event.key === "Enter" && completeInstructionEnter()) {
         event.preventDefault();
         event.stopPropagation();
         return;
