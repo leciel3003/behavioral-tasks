@@ -16,6 +16,8 @@ function doPost(e) {
     const rows = Array.isArray(payload.rows)
       ? payload.rows.map((row) => ({
           ...row,
+          condition: formatTaskCondition(row.condition),
+          ...(row.trial_type ? { trial_type: formatTaskCondition(row.trial_type) } : {}),
           entry_condition: formatEntryCondition(
             row.entry_condition || payload.entry_condition || "standalone"
           )
@@ -254,4 +256,13 @@ function jsonResponse(body) {
   return ContentService
     .createTextOutput(JSON.stringify(body))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function formatTaskCondition(value) {
+  const labels = {
+    "practice": "연습 시행",
+    "practice-no-delay": "연습 시행"
+  };
+
+  return labels[value] || value;
 }
