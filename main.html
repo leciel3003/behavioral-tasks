@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-store">
-  <title>행동심리검사</title>
+  <title>?됰룞?щ━寃??/title>
   <style>
     :root {
       --bg: #ffffff;
@@ -121,35 +121,35 @@
 <body>
   <main class="app">
     <header>
-      <h1>행동심리검사</h1>
-      <p class="subtitle">참가자 ID를 입력한 뒤 수행할 과제를 선택해 주세요.</p>
+      <h1>?됰룞?щ━寃??/h1>
+      <p class="subtitle">李멸???ID瑜??낅젰?????섑뻾??怨쇱젣瑜??좏깮??二쇱꽭??</p>
     </header>
 
     <section class="identity" aria-labelledby="id-label">
-      <label id="id-label" for="participantId">참가자 ID</label>
-      <input id="participantId" type="text" autocomplete="off" placeholder="ID를 입력하세요">
+      <label id="id-label" for="participantId">李멸???ID</label>
+      <input id="participantId" type="text" autocomplete="off" placeholder="ID瑜??낅젰?섏꽭??>
     </section>
 
-    <section aria-label="통합 과제 선택">
+    <section aria-label="?듯빀 怨쇱젣 ?좏깮">
       <div class="button-grid">
         <button class="task-button primary" type="button" data-entry="combined_paint_first" data-tasks="paint,star-picking-task">
-          <strong>물감채우기<br>+ 별 따기</strong>
-          <small>물감채우기 후 별 따기</small>
+          <strong>臾쇨컧梨꾩슦湲?br>+ 蹂??곌린</strong>
+          <small>臾쇨컧梨꾩슦湲???蹂??곌린</small>
         </button>
         <button class="task-button primary" type="button" data-entry="combined_coin_first" data-tasks="star-picking-task,paint">
-          <strong>별 따기<br>+ 물감채우기</strong>
-          <small>별 따기 후 물감채우기</small>
+          <strong>蹂??곌린<br>+ 臾쇨컧梨꾩슦湲?/strong>
+          <small>蹂??곌린 ??臾쇨컧梨꾩슦湲?/small>
         </button>
       </div>
     </section>
 
-    <section class="single-task-options" aria-label="단독 과제 선택">
+    <section class="single-task-options" aria-label="?⑤룆 怨쇱젣 ?좏깮">
       <div class="button-grid">
         <button class="task-button single" type="button" data-entry="paint_only" data-tasks="paint">
-          <strong>물감채우기</strong>
+          <strong>臾쇨컧梨꾩슦湲?/strong>
         </button>
         <button class="task-button single" type="button" data-entry="coin_only" data-tasks="star-picking-task">
-          <strong>별 따기</strong>
+          <strong>蹂??곌린</strong>
         </button>
       </div>
     </section>
@@ -158,7 +158,7 @@
   </main>
 
   <script>
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxx5I4hQLt56l5ZtPrgY2MAi_KOq7A_ngmgQW-2gU3MkjKuP4MCd4_rtVTi6kD_dHis/exec";
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxzr-t28sDYzwkPqpTlXiX9YCw6QuYEGdUUDBFCymkQ2fPJ8mfa1m2Vedu-N7YMYV69Sg/exec";
     const participantId = document.getElementById("participantId");
     const status = document.getElementById("status");
 
@@ -171,7 +171,7 @@
       const id = participantId.value.trim();
       if (!id) {
         participantId.focus();
-        status.textContent = "참가자 ID를 먼저 입력해 주세요.";
+        status.textContent = "李멸???ID瑜?癒쇱? ?낅젰??二쇱꽭??";
         return;
       }
 
@@ -192,7 +192,7 @@
 
     function showCompletionScreen() {
       sessionStorage.removeItem("behavioralTaskWorkflow");
-      document.body.innerHTML = `<main class="completion-screen" role="status" aria-live="polite">실험이 종료되었습니다.<br>감사합니다.</main>`;
+      document.body.innerHTML = `<main class="completion-screen" role="status" aria-live="polite">?ㅽ뿕??醫낅즺?섏뿀?듬땲??<br>媛먯궗?⑸땲??</main>`;
     }
 
     if (new URLSearchParams(location.search).get("completed") === "1") {
@@ -208,3 +208,4 @@
   </script>
 </body>
 </html>
+

@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
@@ -784,7 +784,7 @@
 <body>
   <div class="instruction-overlay" id="instructionOverlay">
     <div class="instruction-content">
-      <h2 id="instructionTitle">준비</h2>
+      <h2 id="instructionTitle">以鍮?/h2>
       <p id="instructionDetail"></p>
       <div class="instruction-countdown" id="instructionCountdown">5</div>
     </div>
@@ -793,99 +793,98 @@
     <header>
       <div>
         <h1>Paint Task</h1>
-        <p class="subtitle">물감이 사라지는 속도에 반응해 물감의 양을 절반에 유지합니다.</p>
+        <p class="subtitle">臾쇨컧???щ씪吏???띾룄??諛섏쓳??臾쇨컧???묒쓣 ?덈컲???좎??⑸땲??</p>
       </div>
-      <span class="badge" id="runState">대기</span>
+      <span class="badge" id="runState">?湲?/span>
     </header>
-    <button class="settings-toggle" id="settingsToggle" type="button" aria-label="설정 열기" aria-expanded="false">⚙</button>
+    <button class="settings-toggle" id="settingsToggle" type="button" aria-label="?ㅼ젙 ?닿린" aria-expanded="false">??/button>
 
     <section class="layout">
       <aside class="panel settings-drawer" id="settingsDrawer" hidden>
-        <h2>설정</h2>
+        <h2>?ㅼ젙</h2>
         <div class="controls">
           <label>
-            속도 모드
+            ?띾룄 紐⑤뱶
             <select id="speedMode">
-              <option value="protocol">프로토콜 속도: 1배속</option>
-              <option value="demo">빠른 확인: 2배속</option>
+              <option value="protocol">?꾨줈?좎퐳 ?띾룄: 1諛곗냽</option>
+              <option value="demo">鍮좊Ⅸ ?뺤씤: 2諛곗냽</option>
             </select>
           </label>
           <label>
-            연습 총 15초(조건당 5초, 고정)
+            ?곗뒿 珥?15珥?議곌굔??5珥? 怨좎젙)
             <input id="practiceDuration" type="number" min="10" max="10" value="10" disabled>
           </label>
           <label>
-            정확 리듬 기준(모든 조건 ±300ms)
+            ?뺥솗 由щ벉 湲곗?(紐⑤뱺 議곌굔 짹300ms)
             <input id="accuracyWindow" type="number" min="50" max="1000" step="50" value="300">
           </label>
           <label>
-            참가자 ID
-            <input id="participantId" type="text" placeholder="예: P001">
+            李멸???ID
+            <input id="participantId" type="text" placeholder="?? P001">
           </label>
           <label>
-            Google Apps Script 웹앱 URL
+            Google Apps Script ?뱀빋 URL
             <input id="sheetUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec">
           </label>
           <label class="checkbox-label">
             <input id="autoUpload" type="checkbox" checked>
-            종료 시 Google Sheets 자동 저장
-          </label>
-          <div class="badge">Main 1 1분 20초 + Main 2 1분 20초</div>
-          <p class="sheet-status" id="sheetStatus">시트 URL을 넣으면 결과를 Google Sheets로 보낼 수 있습니다.</p>
+            醫낅즺 ??Google Sheets ?먮룞 ???          </label>
+          <div class="badge">Main 1 1遺?20珥?+ Main 2 1遺?20珥?/div>
+          <p class="sheet-status" id="sheetStatus">?쒗듃 URL???ｌ쑝硫?寃곌낵瑜?Google Sheets濡?蹂대궪 ???덉뒿?덈떎.</p>
         </div>
         <div class="button-row">
-          <button class="primary" id="startBtn" type="button">시작</button>
-          <button id="resetBtn" type="button">초기화</button>
-          <button id="exportBtn" type="button" disabled>CSV 저장</button>
-          <button id="uploadBtn" type="button" disabled>Google Sheets 저장</button>
+          <button class="primary" id="startBtn" type="button">?쒖옉</button>
+          <button id="resetBtn" type="button">珥덇린??/button>
+          <button id="exportBtn" type="button" disabled>CSV ???/button>
+          <button id="uploadBtn" type="button" disabled>Google Sheets ???/button>
         </div>
       </aside>
 
       <section class="stage">
         <div class="stage-top">
-          <h2 id="trialTitle">준비</h2>
-          <span class="badge" id="trialBadge">Space / 버튼 반응</span>
+          <h2 id="trialTitle">以鍮?/h2>
+          <span class="badge" id="trialBadge">Space / 踰꾪듉 諛섏쓳</span>
         </div>
 
         <div class="start-row">
-          <button class="primary" id="beginBtn" type="button">시작</button>
+          <button class="primary" id="beginBtn" type="button">?쒖옉</button>
         </div>
 
         <p class="practice-hint" id="practiceHint" hidden></p>
 
         <div class="task-area">
           <div class="battery-wrap">
-            <div class="battery" aria-label="20칸 물감통과 50퍼센트 목표선">
+            <div class="battery" aria-label="20移?臾쇨컧?듦낵 50?쇱꽱??紐⑺몴??>
               <div class="battery-cells" id="batteryCells"></div>
               <div class="target-line"><span class="target-label">50%</span></div>
             </div>
-            <div class="level" id="levelLabel">10/20칸</div>
+            <div class="level" id="levelLabel">10/20移?/div>
           </div>
 
           <div class="level-guidance" id="levelGuidance" aria-live="polite"></div>
 
           <div class="trial-panel">
-            <p class="prompt" id="promptText">시작을 누르면 진행됩니다.</p>
-            <div class="message" id="trialMessage">사라지는 물감에 반응해서 10칸(50%) 근처를 유지하세요.</div>
-            <button class="primary response" id="responseBtn" type="button" aria-label="스페이스바 반응" disabled>SPACE</button>
+            <p class="prompt" id="promptText">?쒖옉???꾨Ⅴ硫?吏꾪뻾?⑸땲??</p>
+            <div class="message" id="trialMessage">?щ씪吏??臾쇨컧??諛섏쓳?댁꽌 10移?50%) 洹쇱쿂瑜??좎??섏꽭??</div>
+            <button class="primary response" id="responseBtn" type="button" aria-label="?ㅽ럹?댁뒪諛?諛섏쓳" disabled>SPACE</button>
           </div>
         </div>
 
         <div class="stats">
           <div class="stat">
-            <small>정확도</small>
+            <small>?뺥솗??/small>
             <strong id="accStat">-</strong>
           </div>
           <div class="stat">
-            <small>평균 간격 오차</small>
+            <small>?됯퇏 媛꾧꺽 ?ㅼ감</small>
             <strong id="meanErrorStat">-</strong>
           </div>
           <div class="stat">
-            <small>오차 SD</small>
+            <small>?ㅼ감 SD</small>
             <strong id="sdErrorStat">-</strong>
           </div>
           <div class="stat">
-            <small>반응 수</small>
+            <small>諛섏쓳 ??/small>
             <strong id="countStat">0</strong>
           </div>
         </div>
@@ -907,7 +906,7 @@
               </tr>
             </thead>
             <tbody id="resultBody">
-              <tr><td class="empty" colspan="10">아직 기록된 반응이 없습니다.</td></tr>
+              <tr><td class="empty" colspan="10">?꾩쭅 湲곕줉??諛섏쓳???놁뒿?덈떎.</td></tr>
             </tbody>
           </table>
         </div>
@@ -931,18 +930,18 @@
       ["slow", "slow", "fast", "fast"],
       ["slow", "fast", "fast", "slow"]
     ];
-    const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxx5I4hQLt56l5ZtPrgY2MAi_KOq7A_ngmgQW-2gU3MkjKuP4MCd4_rtVTi6kD_dHis/exec";
+    const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxzr-t28sDYzwkPqpTlXiX9YCw6QuYEGdUUDBFCymkQ2fPJ8mfa1m2Vedu-N7YMYV69Sg/exec";
     const WORKFLOW_KEY = "behavioralTaskWorkflow";
     const workflow = (() => {
       try { return JSON.parse(sessionStorage.getItem(WORKFLOW_KEY) || "null"); } catch (error) { return null; }
     })();
     const entryCondition = workflow?.entry_condition || new URLSearchParams(location.search).get("entry") || "standalone";
     const ENTRY_LABELS = {
-      combined_paint_first: "통합 과제: 물감 먼저",
-      combined_coin_first: "통합 과제: 코인 먼저",
-      paint_only: "물감 과제 단독",
-      coin_only: "코인 과제 단독",
-      standalone: "단독 실행"
+      combined_paint_first: "?듯빀 怨쇱젣: 臾쇨컧 癒쇱?",
+      combined_coin_first: "?듯빀 怨쇱젣: 肄붿씤 癒쇱?",
+      paint_only: "臾쇨컧 怨쇱젣 ?⑤룆",
+      coin_only: "肄붿씤 怨쇱젣 ?⑤룆",
+      standalone: "?⑤룆 ?ㅽ뻾"
     };
 
     const els = {
@@ -1014,7 +1013,7 @@
       settingsDrawer.hidden = !willOpen;
       app.classList.toggle("settings-open", willOpen);
       settingsToggle.setAttribute("aria-expanded", String(willOpen));
-      settingsToggle.setAttribute("aria-label", willOpen ? "설정 닫기" : "설정 열기");
+      settingsToggle.setAttribute("aria-label", willOpen ? "?ㅼ젙 ?リ린" : "?ㅼ젙 ?닿린");
     });
 
     function loadSheetSettings() {
@@ -1075,7 +1074,7 @@
         type: "instruction",
         phase: "Instruction",
         block,
-        conditionLabel: "안내",
+        conditionLabel: "?덈궡",
         title,
         detail,
         badge,
@@ -1291,9 +1290,9 @@
       els.levelLabel.textContent = `${state.cells}/${CELL_COUNT}칸`;
       if (els.levelGuidance.classList.contains("is-feedback")) return;
       if (state.cells <= TARGET_CELLS - 2) {
-        els.levelGuidance.textContent = "물감을 채워주세요!";
+        els.levelGuidance.textContent = "물감을 채워주세요.";
       } else if (state.cells >= TARGET_CELLS + 2) {
-        els.levelGuidance.textContent = "물감을 덜어주세요!";
+        els.levelGuidance.textContent = "물감을 줄여주세요.";
       } else {
         els.levelGuidance.textContent = "";
       }
@@ -1344,12 +1343,12 @@
       }
       if (block === "Main 1") {
         return {
-          title: "이제 첫 번째 시행이 시작됩니다",
+          title: "이제 첫 번째 시행이 시작됩니다.",
           detail: "본 시행에서는 물감이 떨어지는 속도가 중간에 바뀔 수 있습니다.\n물감의 양을 50% 근처로 유지하세요."
         };
       }
       return {
-        title: "이제 두 번째 시행이 시작됩니다",
+        title: "이제 두 번째 시행이 시작됩니다.",
         detail: "본 시행에서는 물감이 떨어지는 속도가 중간에 바뀔 수 있습니다. 물감의 양을 50% 근처로 유지하세요."
       };
     }
@@ -1483,7 +1482,7 @@
         state.accepting = false;
         setCells(TARGET_CELLS);
         els.responseBtn.disabled = true;
-        setMessage("준비", "잠시 후 50%에서 물감이 사라지기 시작합니다.", badge);
+        setMessage("준비", "잠시 뒤 50%에서 물감이 사라지기 시작합니다.", badge);
         state.drainTimer = window.setTimeout(beginCurrentSegment, 900);
       } else {
         beginCurrentSegment();
@@ -2099,9 +2098,9 @@
           body: JSON.stringify(payload)
         });
         state.uploadSent = true;
-        els.sheetStatus.textContent = `전송 요청 완료: ${rows.length}개 이벤트 행`;
+        els.sheetStatus.textContent = `전송 요청 완료: ${rows.length}개 이벤트`;
       } catch (error) {
-        els.sheetStatus.textContent = "전송 실패: 네트워크나 Apps Script URL을 확인하세요.";
+        els.sheetStatus.textContent = "전송 실패: 네트워크와 Apps Script URL을 확인하세요.";
       } finally {
         state.uploadInProgress = false;
         updateUploadButton();
@@ -2167,3 +2166,4 @@
   </script>
 </body>
 </html>
+

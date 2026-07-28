@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
-  <title>별 따기 행동실험</title>
+  <title>蹂??곌린 ?됰룞?ㅽ뿕</title>
   <style>
     :root {
       --bg: #f4f1ea;
@@ -706,8 +706,8 @@
 <body>
   <div class="instruction-overlay" id="instructionOverlay" hidden>
     <div class="instruction-content">
-      <p id="instructionDetail">별 모으기 과제입니다.
-아래 두 별 중 위 별과 같은 별을 고르세요.</p>
+      <p id="instructionDetail">蹂?紐⑥쑝湲?怨쇱젣?낅땲??
+?꾨옒 ??蹂?以???蹂꾧낵 媛숈? 蹂꾩쓣 怨좊Ⅴ?몄슂.</p>
       <p class="instruction-note" id="instructionNote" hidden></p>
     </div>
   </div>
@@ -715,52 +715,52 @@
   <main class="app">
     <header>
       <div>
-        <h1>별 따기</h1>
-        <p class="subtitle">연구자 확인용 화면</p>
+        <h1>蹂??곌린</h1>
+        <p class="subtitle">?곌뎄???뺤씤???붾㈃</p>
       </div>
       <div class="header-actions">
-        <button type="button" id="resetBtn">초기화</button>
-        <button type="button" class="primary" id="startBtn">시작</button>
+        <button type="button" id="resetBtn">珥덇린??/button>
+        <button type="button" class="primary" id="startBtn">?쒖옉</button>
       </div>
     </header>
 
-    <section class="layout" aria-label="별 따기 행동실험">
+    <section class="layout" aria-label="蹂??곌린 ?됰룞?ㅽ뿕">
       <aside class="panel">
         <div class="status-grid">
           <div class="stat">
-            <span>시행</span>
+            <span>?쒗뻾</span>
             <strong id="trialText">0 / 45</strong>
           </div>
           <div class="stat">
-            <span>별</span>
+            <span>蹂?/span>
             <strong id="coinText">0</strong>
           </div>
           <div class="stat">
-            <span>정상 시행</span>
+            <span>?뺤긽 ?쒗뻾</span>
             <strong id="normalText">30</strong>
           </div>
           <div class="stat">
-            <span>총 시행</span>
+            <span>珥??쒗뻾</span>
             <strong id="totalText">45</strong>
           </div>
         </div>
 
-        <div class="progress" aria-label="전체 시행 진행률">
+        <div class="progress" aria-label="?꾩껜 ?쒗뻾 吏꾪뻾瑜?>
           <div class="progress-fill" id="progressFill"></div>
         </div>
 
-        <div class="log-wrap" aria-label="최근 시행 기록">
+        <div class="log-wrap" aria-label="理쒓렐 ?쒗뻾 湲곕줉">
           <table>
             <thead>
               <tr>
-                <th>시행</th>
-                <th>반응</th>
-                <th>별</th>
+                <th>?쒗뻾</th>
+                <th>諛섏쓳</th>
+                <th>蹂?/th>
               </tr>
             </thead>
             <tbody id="logBody">
               <tr>
-                <td colspan="3">아직 기록 없음</td>
+                <td colspan="3">?꾩쭅 湲곕줉 ?놁쓬</td>
               </tr>
             </tbody>
           </table>
@@ -769,31 +769,31 @@
 
       <section class="stage">
         <div class="stage-top">
-          <p class="message" id="message">시작을 누르면 안내 화면 후 과제가 시작됩니다.</p>
-          <span class="badge" id="trialType">대기</span>
+          <p class="message" id="message">?쒖옉???꾨Ⅴ硫??덈궡 ?붾㈃ ??怨쇱젣媛 ?쒖옉?⑸땲??</p>
+          <span class="badge" id="trialType">?湲?/span>
         </div>
 
         <div class="arena" id="arena" aria-live="polite">
-          <div class="target-zone" aria-label="목표 별">
-            <span class="target-label">목표 별</span>
+          <div class="target-zone" aria-label="紐⑺몴 蹂?>
+            <span class="target-label">紐⑺몴 蹂?/span>
             <span class="target-stimulus" id="targetStimulus"></span>
           </div>
           <button type="button" class="side" id="leftSide" data-side="left" disabled>
-            <span class="side-label">왼쪽</span>
+            <span class="side-label">?쇱そ</span>
             <span class="stimulus-wrap" id="leftStimulus"></span>
           </button>
           <button type="button" class="side" id="rightSide" data-side="right" disabled>
-            <span class="side-label">오른쪽</span>
+            <span class="side-label">?ㅻⅨ履?/span>
             <span class="stimulus-wrap" id="rightStimulus"></span>
           </button>
 
           <div class="fixation" id="fixation" aria-hidden="true">+</div>
           <div class="feedback" id="feedback" aria-live="polite"></div>
-          <div class="running-stars" id="runningStars" aria-live="polite">누적 별 0개</div>
+          <div class="running-stars" id="runningStars" aria-live="polite">?꾩쟻 蹂?0媛?/div>
 
           <div class="overlay is-visible" id="overlay">
             <div class="overlay-box">
-              <strong id="overlayTitle">별 따기</strong>
+              <strong id="overlayTitle">蹂??곌린</strong>
               <p id="overlayText"></p>
             </div>
           </div>
@@ -817,11 +817,11 @@
     const INTRO_MS = 4000;
     const NEXT_MS = 0;
     const STAR_COLORS = [
-      { id: "red", name: "빨간색", color: "#ff4d4f", accent: "#ffffff" },
-      { id: "green", name: "초록색", color: "#22c55e", accent: "#063b22" },
-      { id: "purple", name: "보라색", color: "#9b5cff", accent: "#ffffff" },
-      { id: "pink", name: "분홍색", color: "#ff6fb1", accent: "#ffffff" },
-      { id: "teal", name: "청록색", color: "#14b8a6", accent: "#063f3a" }
+      { id: "red", name: "빨간 별", color: "#ff4d4f", accent: "#ffffff" },
+      { id: "green", name: "초록 별", color: "#22c55e", accent: "#063b22" },
+      { id: "purple", name: "보라 별", color: "#9b5cff", accent: "#ffffff" },
+      { id: "pink", name: "분홍 별", color: "#ff6fb1", accent: "#ffffff" },
+      { id: "teal", name: "청록 별", color: "#14b8a6", accent: "#063f3a" }
     ];
     const STAR_PATTERNS = [
       { id: "solid", name: "민무늬" },
@@ -829,14 +829,14 @@
       { id: "dots", name: "점무늬" },
       { id: "ring", name: "고리무늬" },
       { id: "split", name: "반반무늬" },
-      { id: "burst", name: "햇살무늬" }
+      { id: "burst", name: "빛무늬" }
     ];
     const WORKFLOW_KEY = "behavioralTaskWorkflow";
     const workflow = (() => {
       try { return JSON.parse(sessionStorage.getItem(WORKFLOW_KEY) || "null"); } catch (error) { return null; }
     })();
     const entryCondition = workflow?.entry_condition || new URLSearchParams(location.search).get("entry") || "standalone";
-    const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxx5I4hQLt56l5ZtPrgY2MAi_KOq7A_ngmgQW-2gU3MkjKuP4MCd4_rtVTi6kD_dHis/exec";
+    const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxzr-t28sDYzwkPqpTlXiX9YCw6QuYEGdUUDBFCymkQ2fPJ8mfa1m2Vedu-N7YMYV69Sg/exec";
     const SHEET_URL = workflow?.sheet_url || DEFAULT_SHEET_URL;
 
     const els = {
@@ -1121,7 +1121,7 @@
       state.locked = true;
       setEnabled(false);
       els.fixation.classList.remove("is-visible");
-      els.feedback.textContent = `별 ${earned}개를 땄습니다!`;
+      els.feedback.textContent = `별 ${earned}개를 얻었습니다!`;
       els.feedback.classList.add("is-visible");
       state.feedbackTimer = window.setTimeout(() => {
         els.feedback.classList.remove("is-visible");
@@ -1156,7 +1156,7 @@
 
     function showWorkflowTransition() {
       els.instructionDetail.textContent =
-        "첫 번째 과제가 종료되었습니다.\n두 번째 과제가 곧 시작됩니다.";
+        "泥?踰덉㎏ 怨쇱젣媛 醫낅즺?섏뿀?듬땲??\n??踰덉㎏ 怨쇱젣媛 怨??쒖옉?⑸땲??";
       els.instructionNote.textContent = "";
       els.instructionNote.hidden = true;
       els.instructionOverlay.hidden = false;
@@ -1168,7 +1168,7 @@
       screen.className = "final-completion-screen";
       screen.setAttribute("role", "status");
       screen.setAttribute("aria-live", "polite");
-      screen.textContent = "실험이 종료되었습니다.\n감사합니다.";
+      screen.textContent = "?ㅽ뿕??醫낅즺?섏뿀?듬땲??\n媛먯궗?⑸땲??";
       screen.style.cssText = "position:fixed;inset:0;z-index:999999;display:grid;place-items:center;padding:32px;background:#ffffff;color:#111111;font-size:clamp(25px,4.8vw,42px);font-weight:700;line-height:1.35;text-align:center;white-space:pre-line;";
       document.body.appendChild(screen);
     }
@@ -1183,14 +1183,14 @@
       setEnabled(false);
       els.fixation.classList.remove("is-visible");
       els.feedback.classList.remove("is-visible");
-      els.trialType.textContent = "완료";
-      els.message.textContent = `${TOTAL_TRIALS}회 시행이 완료되었습니다.`;
+      els.trialType.textContent = "?꾨즺";
+      els.message.textContent = `${TOTAL_TRIALS}???쒗뻾???꾨즺?섏뿀?듬땲??`;
       els.trialText.textContent = `${TOTAL_TRIALS} / ${TOTAL_TRIALS}`;
       els.progressFill.style.width = "100%";
       els.startBtn.disabled = false;
-      els.startBtn.textContent = "다시 시작";
+      els.startBtn.textContent = "?ㅼ떆 ?쒖옉";
       document.querySelector(".app").classList.remove("task-running");
-      setOverlay(true, "완료", `총 ${state.coins}개의 별을 획득했습니다.`);
+      setOverlay(true, "?꾨즺", `珥?${state.coins}媛쒖쓽 蹂꾩쓣 ?띾뱷?덉뒿?덈떎.`);
       const hasNextTask = Boolean(workflow && workflow.current_index < workflow.tasks.length - 1);
       if (workflow && !hasNextTask) showFinalCompletionScreen();
       if (hasNextTask) {
@@ -1254,7 +1254,7 @@
     }
 
     function showIncorrectFeedback() {
-      els.feedback.textContent = "오답입니다.";
+      els.feedback.textContent = "?ㅻ떟?낅땲??";
       els.feedback.classList.add("is-visible");
       state.feedbackTimer = window.setTimeout(() => {
         els.feedback.classList.remove("is-visible");
@@ -1263,7 +1263,7 @@
     }
 
     function showPracticeFeedback(correct) {
-      els.feedback.textContent = correct ? "정답입니다!" : "틀렸습니다.";
+      els.feedback.textContent = correct ? "?뺣떟?낅땲??" : "??몄뒿?덈떎.";
       els.feedback.classList.add("is-visible");
       state.feedbackTimer = window.setTimeout(() => {
         els.feedback.classList.remove("is-visible");
@@ -1471,7 +1471,7 @@
       els.startBtn.textContent = "시작";
       document.querySelector(".app").classList.remove("task-running");
       els.instructionOverlay.hidden = true;
-      setOverlay(true, "별 따기", "");
+      setOverlay(true, "별 고르기", "");
       renderStatus();
       renderLog();
     }
@@ -1496,8 +1496,8 @@
       window.clearTimeout(state.introTimer);
       els.instructionDetail.textContent = detail;
       els.instructionNote.textContent = note
-        ? `${note}\n이해했으면 엔터를 눌러 주세요.`
-        : "이해했으면 엔터를 눌러 주세요.";
+        ? `${note}\n?댄빐?덉쑝硫??뷀꽣瑜??뚮윭 二쇱꽭??`
+        : "?댄빐?덉쑝硫??뷀꽣瑜??뚮윭 二쇱꽭??";
       els.instructionNote.hidden = false;
       els.instructionOverlay.hidden = false;
       state.pendingInstructionAction = action;
@@ -1512,19 +1512,19 @@
     }
 
     function showCursorIntro() {
-      showInstructionStep("왼쪽/오른쪽 화살표 키로 답합니다.", "", showRewardIntro);
+      showInstructionStep("?쇱そ/?ㅻⅨ履??붿궡???ㅻ줈 ?듯빀?덈떎.", "", showRewardIntro);
     }
 
     function showRewardIntro() {
-      showInstructionStep("맞히면 별 1개를 모읍니다.", "이후 선물로 교환할 수 있습니다.", showFixationIntro);
+      showInstructionStep("留욏엳硫?蹂?1媛쒕? 紐⑥쓭?덈떎.", "?댄썑 ?좊Ъ濡?援먰솚?????덉뒿?덈떎.", showFixationIntro);
     }
 
     function showFixationIntro() {
-      showInstructionStep("+가 나오면 화면 중앙을 봐 주세요.\n곧 시작합니다.", "", showPracticeIntro);
+      showInstructionStep("+媛 ?섏삤硫??붾㈃ 以묒븰??遊?二쇱꽭??\n怨??쒖옉?⑸땲??", "", showPracticeIntro);
     }
 
     function showPracticeIntro() {
-      showInstructionStep("연습 시행입니다.\n목표 별과 같은 별을 고르세요.", "", beginTask);
+      showInstructionStep("?곗뒿 ?쒗뻾?낅땲??\n紐⑺몴 蹂꾧낵 媛숈? 蹂꾩쓣 怨좊Ⅴ?몄슂.", "", beginTask);
     }
 
     function showPostPracticeIntro() {
@@ -1532,7 +1532,7 @@
       setEnabled(false);
       els.fixation.classList.remove("is-visible");
       els.feedback.classList.remove("is-visible");
-      showInstructionStep("이제 첫 번째 시행이 시작됩니다.", "", () => {
+      showInstructionStep("?댁젣 泥?踰덉㎏ ?쒗뻾???쒖옉?⑸땲??", "", () => {
         els.instructionOverlay.hidden = true;
         state.locked = false;
         state.active = true;
@@ -1549,7 +1549,7 @@
       state.startedAt = new Date().toISOString();
       state.taskStartedPerformance = performance.now();
       els.startBtn.disabled = true;
-      showInstructionStep("별 모으기 과제입니다.\n상단의 별과 같은 별을 찾아 주세요.", "", showCursorIntro);
+      showInstructionStep("蹂?紐⑥쑝湲?怨쇱젣?낅땲??\n?곷떒??蹂꾧낵 媛숈? 蹂꾩쓣 李얠븘 二쇱꽭??", "", showCursorIntro);
     }
 
     function startTask() {
@@ -1806,7 +1806,7 @@
       if (!state.finishedAt) return true;
       if (!state.log.length && !state.keyboardLog.length && !state.pointerLog.length) return true;
 
-      setFinalCompletionMessage("저장 중입니다.\n잠시만 기다려주세요.");
+      setFinalCompletionMessage("???以묒엯?덈떎.\n?좎떆留?湲곕떎?ㅼ＜?몄슂.");
 
       await waitForUploadToFinish();
       if (!state.uploadSent) {
@@ -1815,7 +1815,7 @@
       await waitForUploadToFinish();
 
       if (!state.uploadSent) {
-        setFinalCompletionMessage("저장에 실패했습니다.\n잠시 후 다시 눌러주세요.");
+        setFinalCompletionMessage("??μ뿉 ?ㅽ뙣?덉뒿?덈떎.\n?좎떆 ???ㅼ떆 ?뚮윭二쇱꽭??");
         return false;
       }
       return true;
@@ -1898,3 +1898,4 @@
   </script>
 </body>
 </html>
+
