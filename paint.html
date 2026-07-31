@@ -1241,6 +1241,8 @@
         status: "",
         filled_cells_before_response: state.cells,
         filled_cells_after_response: state.cells,
+        cell_change_direction: "",
+        cell_change_cells: "",
         input_source: "",
         input_key: "",
         input_code: "",
@@ -1259,6 +1261,37 @@
     function recordSegmentBoundary(eventType, now = performance.now()) {
       if (!state.running || !state.trial || state.trial.type === "instruction") return;
       state.results.push(baseEventRow(eventType, now));
+      renderResults();
+    }
+
+    function cellChangeMetrics(before, after) {
+      const levelErrorCells = Math.abs(after - TARGET_CELLS);
+      const levelAccuracy = Math.max(0, 1 - (levelErrorCells / TARGET_CELLS));
+      const targetHitAcc = after === TARGET_CELLS ? 1 : 0;
+      const direction = after > before ? "increase" : after < before ? "decrease" : "none";
+
+      return {
+        acc: targetHitAcc,
+        target_hit_acc: targetHitAcc,
+        level_status: getLevelStatus(after),
+        level_proximity: Number(levelAccuracy.toFixed(3)),
+        level_proximity_percent: Math.round(levelAccuracy * 100),
+        level_error_cells: levelErrorCells,
+        status: getLevelStatus(after),
+        filled_cells_before_response: before,
+        filled_cells_after_response: after,
+        cell_change_direction: direction,
+        cell_change_cells: after - before
+      };
+    }
+
+    function recordCellDecrease(before, after, now = performance.now()) {
+      if (!state.running || !state.trial || state.trial.type === "instruction" || before === after) return;
+      const metrics = cellChangeMetrics(before, after);
+      state.results.push({
+        ...baseEventRow("cell_decrease", now),
+        ...metrics
+      });
       renderResults();
     }
 
@@ -1537,7 +1570,10 @@
 
     function drainOneCell() {
       if (!state.running || !state.trial) return;
+      const now = performance.now();
+      const before = state.cells;
       setCells(state.cells - 1);
+      recordCellDecrease(before, state.cells, now);
       state.drainTimer = window.setTimeout(drainOneCell, intervalMs(state.trial.condition));
     }
 
@@ -1610,11 +1646,8 @@
       const windowMs = RHYTHM_TOLERANCE_MS;
       const after = state.cells;
       const intervalAccuracy = Math.abs(error) <= windowMs ? 1 : 0;
-      const levelErrorCells = Math.abs(before - TARGET_CELLS);
-      const levelAccuracy = Math.max(0, 1 - (levelErrorCells / TARGET_CELLS));
-      const levelStatus = getLevelStatus(after);
+      const changeMetrics = cellChangeMetrics(before, after);
       const timingStatus = getTimingStatus(error, windowMs);
-      const targetHitAcc = after === TARGET_CELLS ? 1 : 0;
       const elapsedMs = Math.round(now - state.trialStart);
 
       state.responseCount += 1;
@@ -1631,18 +1664,10 @@
         within_segment_response_interval_ms: isFirstResponseInSegment ? "" : Math.round(withinSegmentInterval),
         response_interval_ms: isFirstResponseInSegment ? "" : Math.round(withinSegmentInterval),
         interval_error_ms: Math.round(error),
-        acc: targetHitAcc,
-        target_hit_acc: targetHitAcc,
+        ...changeMetrics,
         interval_accuracy: intervalAccuracy,
-        level_status: levelStatus,
         timing_status: timingStatus,
-        level_proximity: Number(levelAccuracy.toFixed(3)),
-        level_proximity_percent: Math.round(levelAccuracy * 100),
-        level_error_cells: levelErrorCells,
         timing_correct: intervalAccuracy,
-        status: levelStatus,
-        filled_cells_before_response: before,
-        filled_cells_after_response: after,
         input_source: inputMeta.input_source || "button",
         input_key: inputMeta.input_key || "",
         input_code: inputMeta.input_code || "",
@@ -1934,31 +1959,32 @@
       }
 
       const responseRows = state.results.filter((row) => row.event_type === "space_response");
-      els.resultBody.innerHTML = responseRows.map((row) => `
+      const cellChangeRows = state.results.filter((row) => row.cell_change_direction === "increase" || row.cell_change_direction === "decrease");
+      els.resultBody.innerHTML = cellChangeRows.map((row) => `
         <tr>
           <td>${row.phase}</td>
           <td>${row.block}</td>
-          <td>${row.response_index}</td>
+          <td>${row.event_type === "space_response" ? row.response_index : row.cell_change_direction}</td>
           <td>${row.condition}</td>
           <td>${row.segment_index}</td>
           <td>${row.rate_cells_per_sec}/s</td>
           <td>${row.segment_elapsed_ms}</td>
           <td>${row.interval_error_ms}</td>
           <td>${row.target_hit_acc}</td>
-          <td>${row.level_status}/${row.timing_status}</td>
+          <td>${row.timing_status ? `${row.level_status}/${row.timing_status}` : row.level_status}</td>
         </tr>
       `).join("") || '<tr><td class="empty" colspan="10">아직 기록된 반응이 없습니다.</td></tr>';
 
       const errors = responseRows.map((row) => Number(row.interval_error_ms)).filter(Number.isFinite);
-      const acc = responseRows.length
-        ? responseRows.reduce((sum, row) => sum + Number(row.target_hit_acc || 0), 0) / responseRows.length
+      const acc = cellChangeRows.length
+        ? cellChangeRows.reduce((sum, row) => sum + Number(row.target_hit_acc || 0), 0) / cellChangeRows.length
         : null;
       const avg = mean(errors);
       const spread = sd(errors);
       els.accStat.textContent = acc === null ? "-" : `${Math.round(acc * 100)}%`;
       els.meanErrorStat.textContent = avg === null ? "-" : `${Math.round(avg)} ms`;
       els.sdErrorStat.textContent = spread === null ? "-" : `${Math.round(spread)} ms`;
-      els.countStat.textContent = String(responseRows.length);
+      els.countStat.textContent = String(cellChangeRows.length);
       updateUploadButton();
     }
 
@@ -2023,6 +2049,8 @@
         "status",
         "filled_cells_before_response",
         "filled_cells_after_response",
+        "cell_change_direction",
+        "cell_change_cells",
         "input_source",
         "input_key",
         "input_code",

@@ -104,6 +104,8 @@ function ensureHeaders(sheet, rows, task) {
     "status",
     "filled_cells_before_response",
     "filled_cells_after_response",
+    "cell_change_direction",
+    "cell_change_cells",
     "input_source",
     "input_key",
     "input_code",
